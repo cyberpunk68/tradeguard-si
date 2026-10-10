@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>$TOKEN 2.1M | Axiom</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    /* Mock of an Axiom token page: same label wording as the real token-info tiles, so the
+       extension's heuristics (not special selectors) are what get tested. */
+    body { margin: 0; font: 14px/1.4 system-ui, sans-serif; background: #090a0d; color: #e7e9ee; }
+    header { display: flex; gap: 22px; align-items: center; padding: 12px 20px; border-bottom: 1px solid #1f232b; }
+    header b { font-size: 18px; } .k { color: #7b8394; font-size: 12px; margin-right: 4px; } .v { font-weight: 600; }
+    main { display: grid; grid-template-columns: 1fr 320px; gap: 16px; padding: 16px 20px; }
+    .panel { background: #111318; border: 1px solid #1f232b; border-radius: 10px; padding: 14px; }
+    .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .tile { border: 1px solid #1f232b; border-radius: 8px; padding: 8px; text-align: center; }
+    .tile span:first-child { display: block; font-weight: 700; } .tile span:last-child { font-size: 11px; color: #7b8394; }
+    label { display: block; margin: 10px 0 4px; color: #7b8394; font-size: 12px; }
+    input { width: 100%; box-sizing: border-box; padding: 9px; background: #090a0d; border: 1px solid #1f232b; color: #e7e9ee; border-radius: 6px; }
+    .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .buy, .sell { padding: 11px; border: 0; border-radius: 6px; font-weight: 700; cursor: pointer; color: #fff; }
+    .buy { background: #16a34a; } .sell { background: #dc2626; }
+    #log { font: 12.5px ui-monospace, monospace; color: #aab1bf; min-height: 80px; }
+    footer { position: fixed; bottom: 0; right: 0; padding: 6px 12px; color: #7b8394; font-size: 12px; }
+    nav a { color: #7aa7ff; margin-right: 10px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <b id="sym">$TOKEN</b>
+    <span><span class="k">MC</span><span class="v" id="mc">$2.1M</span></span>
+    <span><span class="k">Liquidity</span><span class="v" id="liq">$412.5K</span></span>
+    <nav id="nav"></nav>
+  </header>
+  <main>
+    <section class="panel">
+      <h3 style="margin-top:0">Token Info</h3>
+      <div class="tiles" id="tiles"></div>
+      <h3>5m flow</h3>
+      <div class="tiles" id="flow">
+        <div class="tile"><span>$11.1K</span><span>5m Vol</span></div>
+        <div class="tile"><span>108 / $5.84K</span><span>Buys</span></div>
+        <div class="tile"><span>103 / $5.21K</span><span>Sells</span></div>
+      </div>
+      <h3>Orders that reached the "exchange"</h3>
+      <div id="log"></div>
+    </section>
+    <section class="panel">
+      <div style="display:flex;justify-content:space-between;color:#7b8394;font-size:12px"><span>Balance</span><span>12.5 SOL</span></div>
+      <label for="amt">Amount (SOL)</label>
+      <input id="amt" value="0.5" />
+      <div class="btns">
+        <button class="buy" id="buyBtn">Buy</button>
+        <button class="sell" id="sellBtn">Sell</button>
+      </div>
+    </section>
+  </main>
+  <footer>SOL $150.00</footer>
+  <script src="/axiom.js"></script>
+</body>
+</html>

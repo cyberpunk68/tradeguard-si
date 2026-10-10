@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TradeGuard SI Coach</title>
+  <link rel="stylesheet" href="theme.css" />
+  <style>
+    html, body { height: 100%; overflow-x: hidden; }
+    body { display: grid; grid-template-rows: auto auto 1fr auto; }
+    /* Live strip: what the coach sees right now. */
+    #live { padding: 10px 12px; border-bottom: 1px solid var(--line); background: linear-gradient(180deg, #11141a, var(--bg)); display: grid; gap: 6px; font-size: 12.5px; }
+    .l-top { display: flex; align-items: center; gap: 8px; }
+    .l-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex: none; }
+    .l-on .l-dot { background: var(--teal); box-shadow: 0 0 0 3px rgba(79,209,165,.15); animation: pulse 2s infinite; }
+    @keyframes pulse { 50% { box-shadow: 0 0 0 5px rgba(79,209,165,.05); } }
+    .l-name { flex: 1; min-width: 0; color: var(--text); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .l-name small { color: var(--muted); font-weight: 500; }
+    .l-auto { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11.5px; }
+    .l-auto .switch { width: 30px; height: 18px; } .l-auto .switch span::after { width: 12px; height: 12px; }
+    .l-auto .switch input:checked + span::after { transform: translateX(12px); }
+    .l-moves { display: flex; gap: 10px; flex-wrap: wrap; font-family: var(--mono); font-size: 12px; color: var(--text-2); }
+    .l-moves .up { color: var(--teal); } .l-moves .dn { color: var(--red); }
+    .l-pre { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .l-badge { font: 800 10.5px/1 var(--sans); letter-spacing: .1em; padding: 5px 7px; border-radius: 6px; background: var(--card-2); color: var(--text-2); border: 1px solid var(--line); }
+    .lv-0 { color: var(--teal); border-color: rgba(79,209,165,.4); } .lv-1 { color: var(--blue); } .lv-2 { color: var(--amber); border-color: rgba(243,183,79,.4); }
+    .lv-3 { color: var(--orange); border-color: rgba(255,154,79,.45); } .lv-4 { background: var(--red); color: #1a0606; border-color: var(--red); }
+    .l-why { color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+    .l-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .l-tag { font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+    .l-tag.bad { color: var(--red); border-color: rgba(255,97,89,.35); } .l-tag.ok { color: var(--teal); border-color: rgba(79,209,165,.3); }
+    .l-off { color: var(--muted); }
+    .autoline { align-self: center; font-size: 11px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+    header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); background: var(--bg); }
+    header .wordmark { flex: 1; }
+    header select { padding: 6px 8px; font-size: 12px; border-radius: 8px; max-width: 150px; min-width: 0; }
+    header .wordmark { min-width: 0; white-space: nowrap; }
+    .icon { padding: 6px 9px; font-size: 13px; border-radius: 8px; }
+    #log { overflow-y: auto; padding: 14px 12px 8px; display: flex; flex-direction: column; gap: 10px; }
+    .msg { max-width: 100%; font-size: 13.5px; line-height: 1.55; color: var(--text-2); overflow-wrap: anywhere; }
+    .msg.user { align-self: flex-end; max-width: 85%; background: var(--card-2); border: 1px solid var(--line); color: var(--text); padding: 8px 12px; border-radius: 14px 14px 4px 14px; white-space: pre-wrap; }
+    .msg.ai p { margin: 0 0 8px; } .msg.ai p:last-child { margin: 0; }
+    .msg.ai ul { margin: 4px 0 8px; padding-left: 18px; } .msg.ai li { margin: 2px 0; }
+    .msg.ai strong { color: var(--text); }
+    .msg.ai code { font: 12px var(--mono); background: rgba(255,255,255,.05); padding: 1px 5px; border-radius: 5px; }
+    .tool { align-self: flex-start; font-size: 11.5px; color: var(--muted); border: 1px dashed var(--line); border-radius: 999px; padding: 3px 10px; }
+    .thinking { font-size: 12px; color: var(--muted); }
+    .thinking::after { content: '…'; animation: dots 1.2s steps(3) infinite; }
+    @keyframes dots { 0% { content: '.'; } 33% { content: '..'; } 66% { content: '...'; } }
+    .err { font-size: 12.5px; color: var(--red); border: 1px solid rgba(255,97,89,.35); background: rgba(255,97,89,.06); border-radius: 10px; padding: 8px 10px; }
+
+    /* Verdict card: readable in three seconds. */
+    .verdict { border: 1px solid var(--line); border-radius: 14px; background: var(--card); overflow: hidden; }
+    .v-top { display: flex; align-items: center; gap: 10px; padding: 12px 14px 8px; }
+    .v-badge { font: 800 12px/1 var(--sans); letter-spacing: .1em; padding: 7px 10px; border-radius: 8px; white-space: nowrap; }
+    .v-avoid .v-badge { background: var(--red); color: #1a0606; }
+    .v-no_trade .v-badge { background: #3a2f1c; color: var(--amber); border: 1px solid rgba(243,183,79,.4); }
+    .v-wait .v-badge { background: #1b2740; color: var(--blue); border: 1px solid rgba(122,167,255,.4); }
+    .v-fits_rules .v-badge { background: #12302a; color: var(--teal); border: 1px solid rgba(79,209,165,.4); }
+    .v-avoid { border-color: rgba(255,97,89,.45); }
+    .v-head { font-weight: 650; color: var(--text); font-size: 14px; line-height: 1.3; }
+    .v-reasons { list-style: none; margin: 0; padding: 0 14px 10px; display: grid; gap: 4px; }
+    .v-reasons li { font-size: 13px; color: var(--text-2); padding-left: 14px; position: relative; }
+    .v-reasons li::before { content: ''; position: absolute; left: 2px; top: .62em; width: 5px; height: 5px; border-radius: 50%; background: var(--muted); }
+    .v-row { display: grid; grid-template-columns: 64px 1fr; gap: 8px; padding: 8px 14px; border-top: 1px solid var(--line); font-size: 13px; }
+    .v-row b { font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding-top: 2px; font-weight: 600; }
+    .v-row span { color: var(--text); }
+    .v-foot { display: flex; justify-content: flex-end; padding: 6px 10px 10px; }
+    .v-foot button { font-size: 12px; padding: 6px 10px; }
+
+    .proposal { border: 1px solid rgba(122,167,255,.35); border-radius: 12px; padding: 12px; background: rgba(122,167,255,.04); }
+    .proposal h4 { margin: 0 0 6px; font-size: 13px; }
+    .proposal p { margin: 0 0 8px; font-size: 12.5px; color: var(--muted); }
+    .proposal table { width: 100%; font: 12.5px var(--mono); border-collapse: collapse; margin-bottom: 10px; }
+    .proposal td { padding: 3px 0; color: var(--text-2); } .proposal td:last-child { text-align: right; color: var(--text); }
+    .proposal .row { display: flex; gap: 8px; justify-content: flex-end; }
+
+    .setup { margin: auto 0; display: grid; gap: 10px; }
+    .setup h2 { font-size: 16px; }
+    .setup p { margin: 0; color: var(--muted); font-size: 13px; }
+    .setup input { width: 100%; font-family: var(--mono); font-size: 13px; }
+    .empty { margin: auto 0; text-align: center; color: var(--muted); font-size: 13px; display: grid; gap: 6px; }
+    .empty b { color: var(--text); font-size: 15px; }
+
+    footer { padding: 8px 12px 12px; border-top: 1px solid var(--line); background: var(--bg); display: grid; gap: 8px; }
+    .quick { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+    .quick button { white-space: nowrap; font-size: 12px; padding: 6px 10px; border-radius: 999px; font-weight: 500; }
+    .composer { display: flex; gap: 8px; align-items: flex-end; }
+    textarea { flex: 1; resize: none; min-height: 40px; max-height: 140px; font: 13.5px/1.45 var(--sans); color: var(--text); background: #0b0e13; border: 1px solid var(--line); border-radius: 12px; padding: 9px 11px; outline: none; }
+    textarea:focus { border-color: var(--line-2); }
+    .fine { font-size: 10.5px; color: var(--muted); text-align: center; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wordmark">Trade<i>Guard</i> <span class="muted" style="letter-spacing:0;text-transform:none;font-weight:500">coach</span></div>
+    <select id="model" aria-label="Model"></select>
+    <button id="newChat" class="icon" title="New chat">＋</button>
+    <button id="keyBtn" class="icon" title="API key">⚙</button>
+  </header>
+
+  <section id="live" aria-live="polite"></section>
+
+  <main id="log" aria-live="polite"></main>
+
+  <footer>
+    <div class="quick" id="quick">
+      <button data-q="Quick check on this token. Trade or not?">⚡ Quick check</button>
+      <button data-q="Is this token a scam or bundled launch?">Scam check</button>
+      <button data-q="Why did TradeGuard SI stop my last order?">Why was I stopped?</button>
+      <button data-q="Review my last 7 days. What's my biggest leak?">Review my week</button>
+      <button data-q="Give me the full breakdown: chart structure, levels, flow and trade math.">Details</button>
+    </div>
+    <div class="composer">
+      <textarea id="input" rows="1" placeholder="Ask your coach…  (Enter to send)"></textarea>
+      <button id="send" class="primary">Send</button>
+    </div>
+    <div class="fine">Not financial advice. When the coach looks something up, that data goes to Anthropic with your API key.</div>
+  </footer>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

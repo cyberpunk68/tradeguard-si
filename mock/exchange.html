@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>67,000.00 | BTCUSDT | MockEx</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    /* A fake exchange that looks and behaves enough like a real one to exercise TradeGuard SI.
+       Markup deliberately mirrors common exchange patterns (labels, "Available", "10x", Buy/Sell text)
+       so it tests the generic heuristics rather than special selectors. */
+    body { margin: 0; font: 14px/1.4 system-ui, sans-serif; background: #0b0e11; color: #eaecef; }
+    header { display: flex; gap: 24px; align-items: baseline; padding: 14px 20px; border-bottom: 1px solid #2b3139; }
+    header b { font-size: 18px; } .price { font: 600 22px ui-monospace, monospace; } .chg { color: #0ecb81; font-family: ui-monospace, monospace; }
+    nav a { color: #848e9c; margin-right: 12px; } nav a.on { color: #f0b90b; }
+    main { display: grid; grid-template-columns: 1fr 340px; gap: 16px; padding: 16px 20px; }
+    .panel { background: #181a20; border: 1px solid #2b3139; border-radius: 8px; padding: 16px; }
+    .row { display: flex; justify-content: space-between; margin: 8px 0; color: #848e9c; font-size: 13px; }
+    label { display: block; margin: 12px 0 4px; color: #848e9c; font-size: 13px; }
+    input { width: 100%; box-sizing: border-box; padding: 10px; background: #0b0e11; border: 1px solid #2b3139; color: #eaecef; border-radius: 6px; font-size: 15px; }
+    .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+    .buy, .sell { padding: 12px; border: 0; border-radius: 6px; font-weight: 700; font-size: 15px; cursor: pointer; color: #fff; }
+    .buy { background: #0ecb81; } .sell { background: #f6465d; }
+    .leverage { display: inline-block; padding: 4px 10px; border: 1px solid #2b3139; border-radius: 4px; cursor: pointer; }
+    #log { font: 13px ui-monospace, monospace; color: #b7bdc6; min-height: 120px; }
+    .tools button { margin: 4px 4px 0 0; background: #2b3139; color: #eaecef; border: 0; border-radius: 4px; padding: 6px 10px; cursor: pointer; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <b id="pair">BTC/USDT</b>
+    <span class="price" id="price">67,000.00</span>
+    <span class="chg" id="chg">+0.00%</span>
+    <nav><a href="/spot/BTCUSDT" id="navSpot">Spot</a><a href="/futures/BTCUSDT" id="navFut">Futures</a></nav>
+  </header>
+  <main>
+    <section class="panel">
+      <h3 style="margin-top:0">Orders placed (what actually reached the "exchange")</h3>
+      <div id="log"></div>
+      <div class="tools">
+        <h4>Test controls</h4>
+        <button id="pump">Pump +45% over 70s</button>
+        <button id="dump">Dump −45% over 70s</button>
+        <button id="reset">Reset price</button>
+      </div>
+    </section>
+    <form class="panel" id="orderForm" onsubmit="return false">
+      <div class="row"><span>Available</span><span id="avail">10,000.00 USDT</span></div>
+      <div class="row" id="levRow"><span>Leverage</span><span class="leverage" id="lev">10x</span></div>
+      <label for="amount" id="amountLabel">Amount (USDT)</label>
+      <input id="amount" name="amount" inputmode="decimal" value="500" />
+      <div class="btns">
+        <button type="button" class="buy" id="buyBtn">Buy BTC</button>
+        <button type="button" class="sell" id="sellBtn">Sell BTC</button>
+      </div>
+    </form>
+  </main>
+  <script src="/mock.js"></script>
+</body>
+</html>

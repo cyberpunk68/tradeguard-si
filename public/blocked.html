@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trading is closed · TradeGuard SI</title>
+  <link rel="stylesheet" href="theme.css" />
+  <style>
+    body { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: radial-gradient(1200px 600px at 50% 0%, rgba(255,97,89,.10), transparent 60%), var(--bg); }
+    body.win { background: radial-gradient(1200px 600px at 50% 0%, rgba(79,209,165,.12), transparent 60%), var(--bg); }
+    main { width: min(560px, 100%); text-align: center; display: grid; gap: 14px; }
+    h1 { font-size: clamp(26px, 5vw, 36px); line-height: 1.15; }
+    .clock { font: 700 clamp(44px, 10vw, 72px)/1 var(--mono); color: var(--red); font-variant-numeric: tabular-nums; }
+    .win .clock { color: var(--teal); }
+    .reason { color: var(--text-2); font-size: 16px; }
+    .card { text-align: left; }
+    .card p { margin: 6px 0; color: var(--text-2); font-size: 14px; }
+    .help { font-size: 13px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="wordmark">Trade<i>Guard</i></div>
+    <h1 id="title">Trading is closed</h1>
+    <div class="clock" id="clock">--:--</div>
+    <div class="reason" id="reason"></div>
+    <div class="card">
+      <p><strong>This site is blocked until the timer ends.</strong> You set this up when you were thinking clearly.</p>
+      <p id="advice">Close this tab. Walk, eat, sleep. Write down what happened tonight in one line. The market will still be here.</p>
+    </div>
+    <div class="card" id="noteCard" hidden style="border-color:rgba(79,209,165,.4)"><p style="margin:0 0 6px;color:var(--muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase">A note from calm you</p><p id="note" style="white-space:pre-wrap;color:var(--text);font-size:15px"></p></div>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button id="closeTab" class="primary">Close this tab</button><a class="btn" href="help.html" style="display:inline-flex;align-items:center;padding:10px 14px;border:1px solid var(--line);border-radius:10px;font-weight:600;font-size:13px">I need to talk to someone</a></div>
+    <div class="card" id="sixeight" style="text-align:left"><p style="margin:0"><strong>Use the next 5 minutes on yourself.</strong> 6:8 (from the team behind TradeGuard SI) has a free breathing reset and a journal for nights like this. <a href="https://sixeightapp.com" target="_blank" rel="noopener">sixeightapp.com ↗</a></p></div>
+    <p class="help">If trading feels out of control, free confidential help: US 1-800-GAMBLER · UK GamCare 0808 8020 133 · <a href="https://www.gamblingtherapy.org" target="_blank" rel="noopener">gamblingtherapy.org</a> (worldwide).</p>
+  </main>
+  <script src="blocked.js"></script>
+</body>
+</html>

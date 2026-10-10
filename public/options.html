@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TradeGuard SI Settings</title>
+  <link rel="stylesheet" href="theme.css" />
+  <style>
+    main { max-width: 760px; margin: 0 auto; padding: 40px 16px 80px; }
+    .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    h1 { font-size: 28px; margin-top: 18px; }
+    .sub { color: var(--muted); margin: 6px 0 24px; max-width: 60ch; }
+    section { margin-top: 18px; }
+    section > h2 { font-size: 15px; margin-bottom: 4px; }
+    section > p { color: var(--muted); margin: 0 0 12px; font-size: 13px; }
+    .fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px 18px; }
+    label.f { display: grid; gap: 6px; font-size: 12.5px; color: var(--text-2); }
+    label.f small { color: var(--muted); font-size: 11.5px; }
+    label.f input { width: 100%; }
+    .toggle { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 10px 0; border-top: 1px solid var(--line); }
+    .toggle:first-of-type { border-top: 0; }
+    .toggle div b { display: block; font-weight: 600; font-size: 13.5px; }
+    .toggle div span { color: var(--muted); font-size: 12.5px; }
+    .commit { border-color: rgba(243,183,79,.35); }
+    .banner { padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255,97,89,.35); background: rgba(255,97,89,.07); color: var(--text-2); margin-bottom: 16px; }
+    .sites { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+    .site { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; font-size: 13px; }
+    .custom { display: flex; gap: 8px; margin-top: 12px; }
+    .custom input { flex: 1; }
+    .tag { display: inline-flex; gap: 6px; align-items: center; padding: 5px 6px 5px 10px; border: 1px solid var(--line); border-radius: 999px; font: 12px var(--mono); margin: 8px 6px 0 0; }
+    .tag button { padding: 2px 7px; border-radius: 999px; font-size: 12px; }
+    .save { position: sticky; bottom: 0; display: flex; justify-content: flex-end; gap: 10px; align-items: center; padding: 14px 0; background: linear-gradient(transparent, var(--bg) 35%); margin-top: 18px; }
+    #saved { color: var(--teal); font-size: 12.5px; opacity: 0; transition: opacity .2s; }
+    fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+    fieldset:disabled { opacity: .55; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="top">
+      <div class="wordmark">Trade<i>Guard</i></div>
+      <a href="dashboard.html">Dashboard →</a>
+    </div>
+    <h1>Your trading rules</h1>
+    <p class="sub">Set these while you're calm. TradeGuard SI enforces them when you're not. Every limit tightens automatically when a mood check-in says you're tilted, anxious or chasing.</p>
+
+    <section class="card" id="accountCard" style="margin-bottom:18px">
+      <h2>Account</h2>
+      <div id="acctLinked" hidden>
+        <p id="acctStatus" style="margin:0 0 10px;color:var(--text-2)"></p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" id="syncNowBtn">Sync now</button>
+          <a class="btn" id="manageLink" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;padding:10px 14px;border:1px solid var(--line);border-radius:10px;font-weight:600;font-size:13px">Manage plan ↗</a>
+          <button type="button" id="unlinkBtn" class="danger">Unlink this device</button>
+        </div>
+      </div>
+      <div id="acctUnlinked">
+        <p>Optional. Link a TradeGuard SI account to use your plan's hosted coach (no API key needed), the Telegram bot, and sync. Get a code on your <a id="accountLink" target="_blank" rel="noopener">account page</a>.</p>
+        <div class="fields">
+          <label class="f">Link code<input id="linkCode" autocomplete="off" placeholder="e.g. 7K2QX9MD" maxlength="12" style="font-family:var(--mono);letter-spacing:.12em;text-transform:uppercase" /></label>
+        </div>
+        <div class="toggle"><div><b>Sync my trade journal and check-ins</b><span>Uploads your trades, outcomes, mood check-ins and lockouts to your account so Telegram and other devices see them. Off = nothing is uploaded; the hosted coach still works.</span></div><label class="switch"><input type="checkbox" id="syncConsent" /><span></span></label></div>
+        <button type="button" id="linkBtn" class="primary" style="margin-top:10px">Link account</button>
+        <p id="linkMsg" class="muted" style="margin:8px 0 0"></p>
+      </div>
+    </section>
+
+    <div id="lockBanner" class="banner" hidden>You're in a lockout with commitment mode on, so these settings are read-only until it ends. That's the point.</div>
+
+    <div id="chainStatus" class="banner" hidden style="border-color:rgba(122,167,255,.35);background:rgba(122,167,255,.06)"></div>
+    <div id="pendingBanner" class="banner" hidden style="border-color:rgba(243,183,79,.4);background:rgba(243,183,79,.07)"></div>
+
+    <form id="form">
+      <fieldset id="fs">
+        <section class="card" style="border-color:rgba(79,209,165,.4)">
+          <h2>TradeGuard SI rules</h2>
+          <p>One click to load the memecoin plan: −0.5 SOL daily cap with a 24h lockout, 2 losses max, 3 buys a day, 2 open positions, max 2 entries per token and a 30-min re-entry cooldown, 2/2.5 SOL bankroll, typed amount above 1 SOL, one A-setup a day, no same-token rebuy, 15-min wait after a loss, 60-min cool-down after a +$50 win, the 3-line check, FOMO-copy warnings, and a typed override that costs effort.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button type="button" id="presetBtn" class="primary">Load TradeGuard SI rules</button>
+            <button type="button" class="sysPreset" data-id="conviction">Conviction: 1 trade/day</button>
+            <button type="button" class="sysPreset" data-id="smallfew">Small &amp; few: ≤0.5 SOL, 3/day</button>
+          </div>
+          <span id="presetMsg" class="muted" style="margin-left:10px;font-size:12.5px"></span>
+        </section>
+        <section class="card">
+          <h2>Account size</h2>
+          <p>Used when the exchange page doesn't show your balance. Leave 0 to rely on the page.</p>
+          <div class="fields">
+            <label class="f">Account size (USD)<input type="number" min="0" step="any" name="accountSizeUsd" /></label>
+            <label class="f">Account size (SOL)<small>for Axiom</small><input type="number" min="0" step="any" name="accountSizeSol" /></label>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Position limits</h2>
+          <p>Oversized trades and leverage are how most accounts die.</p>
+          <div class="fields">
+            <label class="f">Max size per trade (% of balance)<small>perps: margin, not notional</small><input type="number" min="0.1" step="0.1" name="maxPositionPct" /></label>
+            <label class="f">Max leverage (x)<input type="number" min="1" step="1" name="maxLeverage" /></label>
+            <label class="f">Max trades per hour<input type="number" min="1" step="1" name="maxTradesPerHour" /></label>
+            <label class="f">Max trades per day<input type="number" min="1" step="1" name="maxTradesPerDay" /></label>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Pattern detection</h2>
+          <p>Revenge trading and chasing pumps.</p>
+          <div class="fields">
+            <label class="f">Revenge window (minutes after a loss)<input type="number" min="0" step="1" name="revengeWindowMin" /></label>
+            <label class="f">Revenge size multiple<small>sizing up by this much after a loss = hard stop</small><input type="number" min="1" step="0.1" name="revengeSizeMultiple" /></label>
+            <label class="f">Chase threshold (% move)<input type="number" min="1" step="1" name="chaseThresholdPct" /></label>
+            <label class="f">Chase window (minutes)<input type="number" min="1" step="1" name="chaseWindowMin" /></label>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Circuit breakers</h2>
+          <p>Hard lockouts. No override until the timer runs out.</p>
+          <div class="fields">
+            <label class="f">Daily max loss (USD)<small>0 = off · locks until midnight</small><input type="number" min="0" step="any" name="dailyLossLimitUsd" /></label>
+            <label class="f">Tilt: consecutive losses<small>0 = off</small><input type="number" min="0" step="1" name="tiltStreak" /></label>
+            <label class="f">Tilt lockout (minutes)<input type="number" min="5" step="5" name="lockoutMinutes" /></label>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Friction</h2>
+          <div class="fields" style="margin-bottom:12px">
+            <label class="f">Countdown (seconds)<small>doubled for hard stops</small><input type="number" min="3" max="120" step="1" name="countdownSeconds" /></label>
+            <label class="f" style="grid-column: span 2">Confirmation phrase<small>typed out (no paste) to override a hard stop</small><input type="text" name="confirmPhrase" /></label>
+          </div>
+          <div class="toggle"><div><b>Mood check-in before trading</b><span>Asked at your first order if you haven't checked in for 3 hours.</span></div><label class="switch"><input type="checkbox" name="requireMoodCheckIn" /><span></span></label></div>
+          <div class="toggle"><div><b>Log last trade before the next</b><span>Win, loss or break-even. Powers the revenge, tilt and daily-loss rules.</span></div><label class="switch"><input type="checkbox" name="askLastOutcome" /><span></span></label></div>
+        </section>
+
+        <section class="card">
+          <h2>Memecoin entry gate</h2>
+          <p>Pass/fail checks read off the token page (Axiom, Photon, GMGN, BullX) before a buy. Sells are never gated.</p>
+          <div class="toggle"><div><b>Enforce my entry gate</b><span>A buy that fails any check gets stopped.</span></div><label class="switch"><input type="checkbox" name="gateEnabled" /><span></span></label></div>
+          <div class="fields" style="margin-top:8px">
+            <label class="f">LP burned at least (%)<input type="number" min="0" max="100" step="1" name="gateLpBurnedMinPct" /></label>
+            <label class="f">Dev holding at most (%)<input type="number" min="0" step="0.1" name="gateDevMaxPct" /></label>
+            <label class="f">Top 10 holders at most (%)<input type="number" min="0" step="0.5" name="gateTop10MaxPct" /></label>
+            <label class="f">Snipers + bundlers + insiders at most (%)<input type="number" min="0" step="0.5" name="gateInsidersMaxPct" /></label>
+            <label class="f">Liquidity at least (× your order)<input type="number" min="0" step="1" name="gateMinLiquidityX" /></label>
+            <label class="f">When it fails<select name="gateSeverity" data-num><option value="2">Pause (countdown)</option><option value="3">Hard stop (type phrase)</option><option value="4">Block, no override</option></select></label>
+          </div>
+          <div class="toggle"><div><b>Warn when stats can't be read</b><span>Pause instead of a banner if the page hides part of your gate.</span></div><label class="switch"><input type="checkbox" name="gateBlockUnverified" /><span></span></label></div>
+        </section>
+
+        <section class="card">
+          <h2>Scam &amp; bundle check</h2>
+          <p>Checks each token's launch with <a href="https://isitbundled.com" target="_blank" rel="noopener">Is It Bundled?</a>: bundled supply, insiders still holding, wallets funded together, devs who bundle repeatedly. Only the token's public address is sent.</p>
+          <div class="toggle"><div><b>Check launches before I buy</b><span>Runs when a token page opens and shows a warning chip if it's risky.</span></div><label class="switch"><input type="checkbox" name="scamCheckEnabled" /><span></span></label></div>
+          <div class="toggle"><div><b>Block "extreme" risk outright</b><span>No override for launches rated extreme. Off = hard stop instead.</span></div><label class="switch"><input type="checkbox" name="scamBlockExtreme" /><span></span></label></div>
+          <div class="fields" style="margin-top:8px">
+            <label class="f">Max bundled at launch (%)<input type="number" min="0" step="1" name="scamMaxBundledPct" /></label>
+            <label class="f">Max still held by flagged wallets (%)<input type="number" min="0" step="1" name="scamMaxFlaggedHoldPct" /></label>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Protections</h2>
+          <p>Gambling-harm safeguards. Tightening a limit applies now; loosening one waits out the cooling-off period below.</p>
+          <div class="fields">
+            <label class="f">Daily profit goal ($)<small>stop-win: "close the tab and enjoy your day" · 0 = off</small><input type="number" min="0" step="any" name="dailyProfitTargetUsd" /></label>
+            <label class="f">Daily loss cap (SOL, realized)<small>0 = off</small><input type="number" min="0" step="0.05" name="dailyLossLimitSol" /></label>
+            <label class="f">Weekly loss limit ($)<small>0 = off</small><input type="number" min="0" step="any" name="weeklyLossLimitUsd" /></label>
+            <label class="f">Monthly loss limit ($)<small>0 = off</small><input type="number" min="0" step="any" name="monthlyLossLimitUsd" /></label>
+            <label class="f">Max losing trades per day<small>0 = off</small><input type="number" min="0" step="1" name="maxLossesPerDay" /></label>
+            <label class="f">Loss lockout length (hours)<small>0 = until midnight</small><input type="number" min="0" step="1" name="lossLockoutHours" /></label>
+            <label class="f">Max buys per day<small>sells don't count · 0 = off</small><input type="number" min="0" step="1" name="maxBuysPerDay" /></label>
+            <label class="f">Max open positions<small>0 = off</small><input type="number" min="0" step="1" name="maxOpenPositions" /></label>
+            <label class="f">Bankroll cap (SOL)<small>buys blocked above this until you sweep · 0 = off</small><input type="number" min="0" step="0.1" name="bankrollMaxSol" /></label>
+            <label class="f">Sweep down to (SOL)<input type="number" min="0" step="0.1" name="bankrollTargetSol" /></label>
+            <label class="f" style="grid-column:span 2">Vault wallet (public address)<small>where profits go. You send them yourself; TradeGuard SI never moves funds</small><input type="text" name="vaultAddress" pattern="[1-9A-HJ-NP-Za-km-z]{32,44}" placeholder="Solana address" style="font-family:var(--mono)" /></label>
+            <label class="f" style="grid-column:span 2">Trading wallet (public address)<small>TradeGuard SI reads your swaps on-chain and logs closed positions itself, so the loss cap works even if you never log a trade. Public address only. Never a private key</small><input type="text" name="tradingWallet" pattern="[1-9A-HJ-NP-Za-km-z]{32,44}" placeholder="Your Axiom wallet address" style="font-family:var(--mono)" /></label>
+            <label class="f" style="grid-column:span 2">Solana RPC URL<small>the public endpoint is rate-limited; a free Helius/QuickNode URL is more reliable</small><input type="url" name="solanaRpcUrl" style="font-family:var(--mono)" /></label>
+            <label class="f">Re-entry cooldown (min)<small>after exiting a token · 0 = off</small><input type="number" min="0" step="5" name="tokenReentryCooldownMin" /></label>
+            <label class="f">Entries per token per day<small>0 = off</small><input type="number" min="0" step="1" name="maxEntriesPerTokenPerDay" /></label>
+            <label class="f">Your stop-loss (%)<small>buys are blocked if one stop-out would exceed what's left of the SOL cap</small><input type="number" min="0" max="100" step="1" name="stopLossPct" /></label>
+            <label class="f">Late entry: block after +%<small>already ran this much (1h/6h/24h or since launch) · 0 = off</small><input type="number" min="0" step="50" name="lateEntryPct" /></label>
+            <label class="f">Typed amount above (SOL)<small>A-setups only · 0 = off</small><input type="number" min="0" step="0.1" name="typedConfirmAboveSol" /></label>
+            <label class="f">A-setup size (SOL)<input type="number" min="0" step="0.1" name="aSetupSizeSol" /></label>
+            <label class="f">A-setups per day<small>0 = off</small><input type="number" min="0" step="1" name="maxASetupsPerDay" /></label>
+            <label class="f">Big win ($)<small>cool-down after a win this size · 0 = off</small><input type="number" min="0" step="any" name="bigWinUsd" /></label>
+            <label class="f">Cool-down after big win (min)<input type="number" min="0" step="5" name="cooldownAfterWinMin" /></label>
+            <label class="f">Reality check every (min)<small>0 = off</small><input type="number" min="0" step="5" name="realityCheckMinutes" /></label>
+            <label class="f">Forced break after (min)<small>continuous session · 0 = off</small><input type="number" min="0" step="10" name="sessionMaxMinutes" /></label>
+            <label class="f">Break length (min)<input type="number" min="1" step="1" name="breakMinutes" /></label>
+            <label class="f">Daily screen-time cap (min)<small>0 = off</small><input type="number" min="0" step="15" name="dailyScreenLimitMinutes" /></label>
+            <label class="f">Rapid-fire window (seconds)<small>0 = off</small><input type="number" min="0" step="5" name="rapidFireSeconds" /></label>
+            <label class="f">Doubling-up multiple<small>each order ≥ this × the last · 0 = off</small><input type="number" min="0" step="0.1" name="escalationMultiple" /></label>
+            <label class="f">Heater: wins in a row<small>+ sizing or speeding up · 0 = off</small><input type="number" min="0" step="1" name="heaterWinStreak" /></label>
+            <label class="f">Quiet hours from (0–23)<input type="number" min="0" max="23" step="1" name="quietStartHour" /></label>
+            <label class="f">Quiet hours until (0–23)<input type="number" min="0" max="23" step="1" name="quietEndHour" /></label>
+            <label class="f">Lockout override<select name="lockoutOverride"><option value="none">None: lockouts are absolute</option><option value="typed">Typed: 60s wait + reason + phrase, one trade</option></select></label>
+            <label class="f">Cooling-off for loosening (hours)<input type="number" min="0" step="1" name="limitChangeDelayHours" /></label>
+          </div>
+          <div class="toggle"><div><b>Quiet hours</b><span>Hard stop on late-night trading.</span></div><label class="switch"><input type="checkbox" name="quietHoursEnabled" /><span></span></label></div>
+          <div class="toggle"><div><b>No same-token rebuy after a loss</b><span>Today's losers stay closed.</span></div><label class="switch"><input type="checkbox" name="sameTokenRebuyBlock" /><span></span></label></div>
+          <div class="toggle"><div><b>3-line check before memecoin buys</b><span>Callout? Late entry? Limits? One "no" means skip.</span></div><label class="switch"><input type="checkbox" name="preBuyChecklist" /><span></span></label></div>
+          <div class="toggle"><div><b>Flag FOMO copy</b><span>Warn when callouts and chat on the page are written to rush you.</span></div><label class="switch"><input type="checkbox" name="fomoCopyWarning" /><span></span></label></div>
+        </section>
+
+        <section class="card">
+          <h2>Wellbeing</h2>
+          <p>Write these on a calm day. They're shown to you on every lockout and stay on this device.</p>
+          <label class="f">A note from calm you<small>why you're doing this, what a bad night costs you, who you're doing it for</small><textarea name="noteToSelf" rows="3" maxlength="500" style="width:100%;font:14px var(--sans);color:var(--text);background:#0b0e13;border:1px solid var(--line);border-radius:10px;padding:9px 11px"></textarea></label>
+          <div class="fields" style="margin-top:10px">
+            <label class="f">Someone you'll call instead<small>name / number</small><input type="text" name="supportContact" maxlength="80" /></label>
+            <label class="f">Help resources for<select name="helpRegion"><option value="auto">Detect automatically</option><option value="US">United States</option><option value="CA">Canada</option><option value="UK">United Kingdom</option><option value="IE">Ireland</option><option value="AU">Australia</option><option value="OTHER">Somewhere else</option></select></label>
+          </div>
+          <div class="toggle"><div><b>Lead with help when it's a pattern</b><span>If lockouts keep happening or you keep trying to win losses back, the closed page sends you to helplines and support first.</span></div><label class="switch"><input type="checkbox" name="helpRedirect" /><span></span></label></div>
+          <p style="margin:8px 0 0"><a href="help.html" target="_blank">Open help and support →</a></p>
+        </section>
+
+        <section class="card commit" style="border-color:rgba(255,97,89,.4)">
+          <div class="toggle"><div><b>Lock my rules</b><span>For when discipline slips. Loosening anything (including unlocking) needs a written reason, a typed phrase and a second confirmation, then waits 72 hours. It's refused outright on a red day, during a lockout, or within 24h after one. Tightening always works instantly.</span></div><label class="switch"><input type="checkbox" name="rulesLocked" /><span></span></label></div>
+          <div class="toggle"><div><b>Block trading sites during lockouts</b><span>Significant lockouts (loss caps, self-exclusion, stop-win days) close every trading site until the timer ends, not just the Buy button.</span></div><label class="switch"><input type="checkbox" name="siteBlockOnLockout" /><span></span></label></div>
+        </section>
+
+        <section class="card commit">
+          <div class="toggle"><div><b>Commitment mode</b><span>During a lockout you can't end it early, turn TradeGuard SI off, or edit these settings.</span></div><label class="switch"><input type="checkbox" name="commitmentMode" /><span></span></label></div>
+        </section>
+
+        <section class="card">
+          <h2>Sites</h2>
+          <p>Built-in support. Turn off any you don't want guarded.</p>
+          <div class="sites" id="sites"></div>
+          <h2 style="margin-top:18px">Custom sites</h2>
+          <p>Any other exchange or DEX. Uses the generic adapter, which reads standard Buy/Sell/Long/Short buttons.</p>
+          <div class="custom">
+            <input id="newSite" placeholder="e.g. app.bitunix.com" autocomplete="off" />
+            <button type="button" id="addSite">Add site</button>
+          </div>
+          <div id="customList"></div>
+        </section>
+
+        <div class="save">
+          <span id="saved">Saved</span>
+          <button type="submit" class="primary">Save rules</button>
+        </div>
+      </fieldset>
+    </form>
+
+    <section class="card">
+      <h2>Your data</h2>
+      <p>Everything is stored only in this browser. Nothing is sent anywhere.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" id="export">Export JSON</button>
+        <button type="button" id="wipe" class="danger">Delete all history</button>
+      </div>
+    </section>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>

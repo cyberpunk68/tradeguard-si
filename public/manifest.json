@@ -1,0 +1,139 @@
+{
+  "manifest_version": 3,
+  "name": "TradeGuard SI: Trading Discipline Coach",
+  "short_name": "TradeGuard",
+  "version": "0.2.0",
+  "description": "The edge you need: blocks oversized, overleveraged, revenge, FOMO and scam trades before you click. Lockouts, mood log, AI coach.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "TradeGuard SI",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
+  },
+  "options_page": "options.html",
+  "background": {
+    "service_worker": "sw.js"
+  },
+  "permissions": [
+    "storage",
+    "alarms",
+    "scripting",
+    "sidePanel",
+    "activeTab",
+    "declarativeNetRequest"
+  ],
+  "optional_host_permissions": [
+    "https://*/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://axiom.trade/*",
+        "https://*.axiom.trade/*",
+        "https://bullx.io/*",
+        "https://neo.bullx.io/*",
+        "https://gmgn.ai/*",
+        "https://photon-sol.tinyastro.io/*",
+        "https://www.binance.com/*",
+        "https://www.binance.us/*",
+        "https://www.bybit.com/*",
+        "https://www.okx.com/*",
+        "https://www.coinbase.com/*",
+        "https://pro.kraken.com/*",
+        "https://app.hyperliquid.xyz/*",
+        "https://arcterminal.ai/*",
+        "https://trade.arcterminal.ai/*",
+        "https://polymarket.com/*",
+        "https://kalshi.com/*",
+        "https://jup.ag/*",
+        "https://robinhood.com/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "host_permissions": [
+    "https://isitbundled.com/*",
+    "https://api.anthropic.com/*",
+    "https://api.mainnet-beta.solana.com/*",
+    "https://api.dexscreener.com/*",
+    "https://axiom.trade/*",
+    "https://*.axiom.trade/*",
+    "https://bullx.io/*",
+    "https://neo.bullx.io/*",
+    "https://gmgn.ai/*",
+    "https://photon-sol.tinyastro.io/*",
+    "https://www.binance.com/*",
+    "https://www.binance.us/*",
+    "https://www.bybit.com/*",
+    "https://www.okx.com/*",
+    "https://www.coinbase.com/*",
+    "https://pro.kraken.com/*",
+    "https://app.hyperliquid.xyz/*",
+    "https://arcterminal.ai/*",
+    "https://trade.arcterminal.ai/*",
+    "https://polymarket.com/*",
+    "https://kalshi.com/*",
+    "https://jup.ag/*",
+    "https://robinhood.com/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "commands": {
+    "open-coach": {
+      "suggested_key": {
+        "default": "Alt+Shift+K"
+      },
+      "description": "Open the TradeGuard SI coach"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "blocked.html",
+        "blocked.js",
+        "help.html",
+        "help.js",
+        "theme.css"
+      ],
+      "matches": [
+        "https://axiom.trade/*",
+        "https://*.axiom.trade/*",
+        "https://bullx.io/*",
+        "https://neo.bullx.io/*",
+        "https://gmgn.ai/*",
+        "https://photon-sol.tinyastro.io/*",
+        "https://www.binance.com/*",
+        "https://www.binance.us/*",
+        "https://www.bybit.com/*",
+        "https://www.okx.com/*",
+        "https://www.coinbase.com/*",
+        "https://pro.kraken.com/*",
+        "https://app.hyperliquid.xyz/*",
+        "https://arcterminal.ai/*",
+        "https://trade.arcterminal.ai/*",
+        "https://polymarket.com/*",
+        "https://kalshi.com/*",
+        "https://jup.ag/*",
+        "https://robinhood.com/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*"
+      ]
+    }
+  ]
+}

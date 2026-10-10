@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TradeGuard SI Dashboard</title>
+  <link rel="stylesheet" href="theme.css" />
+  <style>
+    main { max-width: 1080px; margin: 0 auto; padding: 36px 16px 80px; }
+    .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    h1 { font-size: 28px; margin: 18px 0 4px; }
+    .sub { color: var(--muted); margin: 0 0 20px; }
+    .filters { display: flex; gap: 6px; }
+    .filters button.on { color: var(--text); border-color: var(--line-2); background: var(--card-2); }
+    .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+    .tile .v { font: 600 26px/1.1 var(--mono); font-variant-numeric: tabular-nums; margin-top: 6px; }
+    .tile .d { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .grid2 { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-top: 10px; }
+    @media (max-width: 820px) { .grid2 { grid-template-columns: 1fr; } }
+    .card h2 { font-size: 14px; }
+    .card .cap { color: var(--muted); font-size: 12px; margin: 2px 0 10px; }
+    .insights { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 8px; }
+    .insights li { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); border-left: 3px solid var(--blue); font-size: 13.5px; color: var(--text-2); }
+    .insights li.warn { border-left-color: var(--amber); }
+    .insights li.good { border-left-color: var(--teal); }
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--text-2); margin-bottom: 6px; }
+    .legend span { display: inline-flex; gap: 6px; align-items: center; }
+    .chart { position: relative; }
+    .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .tip { position: absolute; pointer-events: none; background: #0b0e13; border: 1px solid var(--line-2); border-radius: 8px; padding: 7px 9px; font-size: 12px; color: var(--text-2); white-space: nowrap; transform: translate(-50%, calc(-100% - 10px)); opacity: 0; transition: opacity .1s; z-index: 2; }
+    .tip b { color: var(--text); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; font-weight: 500; color: var(--muted); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; padding: 8px 8px; border-bottom: 1px solid var(--line); }
+    td { padding: 8px; border-bottom: 1px solid var(--line); color: var(--text-2); vertical-align: middle; }
+    td.num, th.num { text-align: right; }
+    td select, td input { padding: 5px 7px; font-size: 12.5px; border-radius: 8px; }
+    td input { width: 90px; }
+    .rules span { display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); margin: 1px 3px 1px 0; color: var(--muted); }
+    .empty { color: var(--muted); padding: 24px 0; text-align: center; }
+    .scroll { overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="top">
+      <div class="wordmark">Trade<i>Guard</i></div>
+      <div class="filters" id="range">
+        <button data-d="7">7d</button>
+        <button data-d="30" class="on">30d</button>
+        <button data-d="90">90d</button>
+        <button data-d="0">All</button>
+      </div>
+    </div>
+    <h1>How you trade, and how you feel when you do</h1>
+    <p class="sub">Built from your check-ins and the outcomes you log. Nothing leaves this browser. <a href="options.html">Edit rules</a></p>
+
+    <div class="tiles" id="tiles"></div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>Mood vs. outcomes</h2>
+        <p class="cap">Line: your check-ins (1–5). Markers: trades, placed at the mood you were in when you took them.</p>
+        <div class="legend">
+          <span><svg width="18" height="10"><line x1="0" y1="5" x2="18" y2="5" stroke="#7aa7ff" stroke-width="2"/></svg>Mood</span>
+          <span><svg width="10" height="10"><path d="M5 1 L9 9 L1 9 Z" fill="#4fd1a5"/></svg>Win</span>
+          <span><svg width="10" height="10"><path d="M5 9 L9 1 L1 1 Z" fill="#ff6159"/></svg>Loss</span>
+          <span><svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="#8b93a5"/></svg>Break-even</span>
+          <span><svg width="10" height="10"><circle cx="5" cy="5" r="3.5" fill="none" stroke="#8b93a5" stroke-width="1.5"/></svg>Not logged</span>
+        </div>
+        <div class="chart" id="moodChart"></div>
+      </div>
+      <div class="card">
+        <h2>What TradeGuard SI noticed</h2>
+        <ul class="insights" id="insights"></ul>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>Win rate by mood</h2>
+        <p class="cap">Trades with a logged outcome, grouped by the check-in at the time.</p>
+        <table id="byMood"></table>
+      </div>
+      <div class="card">
+        <h2>Rules triggered</h2>
+        <p class="cap">How often each warning fired before an order.</p>
+        <div class="chart" id="ruleChart"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:10px">
+      <h2>Trade log</h2>
+      <p class="cap">Fix or add outcomes here. They feed the revenge, tilt and daily-loss rules.</p>
+      <div class="scroll"><table id="log"></table></div>
+    </div>
+  </main>
+  <script src="dashboard.js"></script>
+</body>
+</html>

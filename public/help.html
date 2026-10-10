@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>You're not alone · TradeGuard SI</title>
+  <link rel="stylesheet" href="theme.css" />
+  <style>
+    body { background: radial-gradient(1200px 600px at 50% 0%, rgba(122,167,255,.10), transparent 60%), var(--bg); }
+    main { max-width: 720px; margin: 0 auto; padding: 32px 16px 80px; display: grid; gap: 16px; }
+    h1 { font-size: clamp(26px, 5vw, 34px); line-height: 1.2; }
+    h2 { font-size: 16px; margin-bottom: 8px; }
+    .lede { color: var(--text-2); font-size: 16px; margin: 0; }
+    .lockbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+    .lockbar b { font-family: var(--mono); color: var(--red); }
+    .res { display: grid; gap: 10px; }
+    .r { padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--card-2); }
+    .r b { display: block; }
+    .r span { color: var(--text-2); font-size: 14px; }
+    .r .c { font-family: var(--mono); color: var(--text); font-size: 15px; margin-top: 4px; display: block; }
+    .r a { display: block; margin-top: 4px; font-size: 13.5px; }
+    .urgent { border-color: rgba(255,97,89,.45); background: rgba(255,97,89,.06); }
+    .note { padding: 14px; border-radius: 12px; border: 1px solid rgba(79,209,165,.4); background: rgba(79,209,165,.06); white-space: pre-wrap; font-size: 15px; }
+    .why { color: var(--text-2); font-size: 14px; }
+    .why li { margin: 3px 0; }
+    .breath { width: 140px; height: 140px; border-radius: 50%; margin: 10px auto; background: radial-gradient(circle, rgba(122,167,255,.35), rgba(122,167,255,.05)); border: 1px solid rgba(122,167,255,.5); transform: scale(.6); transition: transform 4s ease-in-out; display: grid; place-items: center; font-size: 13px; color: var(--text-2); }
+    .breath.in { transform: scale(1); }
+    .center { text-align: center; }
+    .q { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14px; }
+    .q:first-of-type { border-top: 0; }
+    .q div { display: flex; gap: 6px; }
+    .q button { padding: 6px 10px; font-size: 12px; }
+    .q button.on { border-color: var(--blue); color: var(--text); background: rgba(122,167,255,.1); }
+    select { padding: 6px 8px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="lockbar"><div class="wordmark">Trade<i>Guard</i></div><span id="lockLine"></span></div>
+    <h1 id="headline">You're not alone, and this is fixable.</h1>
+    <p class="lede" id="lede">Trading that feels like a slot machine is common, and it gets better with the right support. Talking to someone is free, confidential and doesn't commit you to anything.</p>
+    <ul class="why" id="why" hidden></ul>
+
+    <section class="card" id="noteCard" hidden>
+      <h2>A note from you, written on a calm day</h2>
+      <div class="note" id="note"></div>
+      <p id="contactLine" style="margin:10px 0 0;color:var(--text-2)"></p>
+    </section>
+
+    <section class="card">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <h2 style="margin:0">Talk to someone now</h2>
+        <select id="region" aria-label="Your country">
+          <option value="US">United States</option><option value="CA">Canada</option><option value="UK">United Kingdom</option>
+          <option value="IE">Ireland</option><option value="AU">Australia</option><option value="OTHER">Somewhere else</option>
+        </select>
+      </div>
+      <div class="res" id="gambling" style="margin-top:10px"></div>
+    </section>
+
+    <section class="card">
+      <h2>If you're thinking about hurting yourself</h2>
+      <div class="res" id="crisis"></div>
+    </section>
+
+    <section class="card center">
+      <h2>Ride the urge</h2>
+      <p class="why" style="margin:0">An urge to trade peaks and fades, usually within 10–20 minutes. Breathe with the circle and let it pass. You don't have to act on it.</p>
+      <div class="breath" id="breath">breathe in</div>
+      <button id="urgeBtn" class="primary">Start a 10-minute urge timer</button>
+      <p id="urgeLine" class="why"></p>
+    </section>
+
+    <section class="card">
+      <h2>A private self-check</h2>
+      <p class="why" style="margin-top:0">Answers stay on this page. They're not saved or sent anywhere.</p>
+      <div id="quiz"></div>
+      <p id="quizResult" class="why" style="margin-bottom:0"></p>
+    </section>
+
+    <section class="card">
+      <h2>More that helps</h2>
+      <div class="res" id="everywhere"></div>
+      <p class="why" style="margin-bottom:0">Strongest next steps: a longer self-exclusion from the TradeGuard SI popup (up to 90 days), moving money out of your trading wallet, and telling one person you trust.</p>
+    </section>
+  </main>
+  <script src="help.js"></script>
+</body>
+</html>

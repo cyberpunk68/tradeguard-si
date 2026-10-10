@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TradeGuard SI</title>
+  <link rel="stylesheet" href="theme.css" />
+  <style>
+    body { width: 360px; padding: 14px; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    section { margin-top: 10px; }
+    .lock { border-color: rgba(255,97,89,.35); background: linear-gradient(180deg, rgba(255,97,89,.07), var(--card)); }
+    .lock .clock { font: 600 36px/1 var(--mono); color: var(--red); margin: 6px 0; font-variant-numeric: tabular-nums; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .stat { background: var(--card-2); border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; }
+    .stat .v { font: 600 17px var(--mono); font-variant-numeric: tabular-nums; }
+    .stat .v small { font-size: 12px; color: var(--muted); font-weight: 500; }
+    .stat .k { font-size: 11px; color: var(--muted); }
+    .row { display: flex; gap: 8px; align-items: center; }
+    .row > * { flex: 1; }
+    .h { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+    .h h3 { font-size: 13px; }
+    .limits { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; color: var(--text-2); }
+    .limits b { font-family: var(--mono); color: var(--text); font-weight: 600; }
+    .note { font-size: 12px; color: var(--blue); margin-top: 6px; }
+    footer { display: flex; justify-content: space-between; margin-top: 12px; font-size: 12.5px; }
+    .hidden { display: none !important; }
+    .pending-d { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wordmark">Trade<i>Guard</i></div>
+    <span id="status" class="pill ok">Guarding</span>
+  </header>
+
+  <section id="lockCard" class="card lock hidden">
+    <div class="eyebrow">Locked out</div>
+    <div class="clock" id="lockClock">--:--</div>
+    <div id="lockReason" class="muted"></div>
+    <button id="endLock" class="danger" style="margin-top:10px;width:100%">End lockout early</button>
+  </section>
+
+  <section class="card">
+    <div class="h"><h3>How are you right now?</h3><span id="moodAge" class="muted" style="font-size:11.5px"></span></div>
+    <div class="scale" id="scale"></div>
+    <div class="chips" id="chips" style="margin-top:8px"></div>
+    <button id="saveMood" class="primary" style="width:100%;margin-top:10px" disabled>Check in</button>
+  </section>
+
+  <section>
+    <div class="grid">
+      <div class="stat"><div class="v" id="tToday">0</div><div class="k">trades today</div></div>
+      <div class="stat"><div class="v" id="pnlToday">$0</div><div class="k">logged P&amp;L</div></div>
+      <div class="stat"><div class="v" id="saves">0</div><div class="k">trades skipped</div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="h"><h3>Limits in force</h3></div>
+    <div class="limits" id="limits"></div>
+    <div class="note" id="moodNote"></div>
+  </section>
+
+  <section id="pendingCard" class="card hidden">
+    <div class="h"><h3>Log your last trade</h3></div>
+    <div class="pending-d" id="pendingDesc"></div>
+    <div class="seg" id="seg">
+      <button data-o="win" class="win">Win</button>
+      <button data-o="breakeven" class="breakeven">Break-even</button>
+      <button data-o="loss" class="loss">Loss</button>
+    </div>
+    <select id="exitReason" style="width:100%;margin-top:8px">
+      <option value="">Exit reason (optional)</option>
+      <option value="stop">Stop-loss</option>
+      <option value="target">Take-profit</option>
+      <option value="trailing">Trailing stop</option>
+      <option value="devSell">Dev sell</option>
+      <option value="time">Time stop</option>
+      <option value="manual">Manual</option>
+    </select>
+    <div class="row" style="margin-top:8px">
+      <input id="pnl" type="number" step="any" placeholder="P&amp;L (optional)" />
+      <button id="saveOutcome" disabled style="flex:none">Save</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="h"><h3>Stop myself</h3><span class="muted" style="font-size:11.5px">panic button</span></div>
+    <div class="row">
+      <select id="lockMins">
+        <option value="30">30 minutes</option>
+        <option value="60" selected>1 hour</option>
+        <option value="240">4 hours</option>
+        <option value="eod">Rest of today</option>
+        <option value="1440">24 hours (self-exclusion)</option>
+        <option value="10080">7 days (self-exclusion)</option>
+        <option value="43200">30 days (self-exclusion)</option>
+        <option value="129600">90 days (self-exclusion)</option>
+      </select>
+      <button id="lockNow" class="danger" style="flex:none">Lock me out</button>
+    </div>
+  </section>
+
+  <button id="openCoach" class="primary" style="width:100%;margin-top:10px">Open coach <span style="opacity:.6;font-weight:500">⌥⇧K</span></button>
+
+  <div id="streak" class="muted" style="font-size:12px;text-align:center;margin-top:10px"></div>
+  <footer>
+    <a href="dashboard.html" target="_blank">Dashboard →</a>
+    <a href="help.html" target="_blank">Get help</a>
+    <label class="row" style="flex:none;gap:8px;font-size:12px" title="Turn guarding on/off">
+      <span class="muted">Active</span>
+      <span class="switch"><input type="checkbox" id="enabled" /><span></span></span>
+    </label>
+    <a href="options.html" target="_blank">Settings</a>
+  </footer>
+  <script src="popup.js"></script>
+</body>
+</html>
