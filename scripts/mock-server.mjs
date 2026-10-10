@@ -84,7 +84,8 @@ createServer((req, res) => {
       const body = JSON.parse(raw);
       lastRequest = { body, headers: req.headers };
       (body.stream ? (streamRequests.push(body), 0) : autoRequests.push(body));
-      if (req.headers['x-api-key'] !== 'test-key') {
+      // Anthropic/OpenCode style (x-api-key) or OpenRouter style (Bearer) test keys.
+      if (req.headers['x-api-key'] !== 'test-key' && req.headers.authorization !== 'Bearer test-or-key') {
         res.writeHead(401, { ...CORS, 'content-type': 'application/json' });
         return res.end(JSON.stringify({ type: 'error', error: { type: 'authentication_error', message: 'invalid x-api-key' } }));
       }

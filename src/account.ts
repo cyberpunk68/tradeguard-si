@@ -3,6 +3,8 @@
 // Security model for what comes BACK from the server: we only accept data that can make the
 // trader safer — lockouts (e.g. /lock from Telegram), mood check-ins, and trade outcomes. We never
 // pull settings, so a compromised account can't loosen limits or redirect the coach elsewhere.
+import Anthropic from '@anthropic-ai/sdk';
+import { keyStorageName, PROVIDERS, providerOf, type Provider } from './coach/providers';
 import { API_BASE } from './config';
 import type { Lockout, MoodEntry, TradeRecord } from './core/types';
 import { loadState } from './storage';
@@ -76,7 +78,7 @@ export async function refreshMe(): Promise<Me | null> {
 }
 
 /** Settings fields that are never uploaded (local-only plumbing). */
-const LOCAL_ONLY = ['coachBaseUrl', 'scamApiBase', 'customSites', 'disabledAdapters'] as const;
+const LOCAL_ONLY = ['coachBaseUrl', 'coachProvider', 'coachProviderModels', 'scamApiBase', 'customSites', 'disabledAdapters'] as const;
 
 export async function syncNow(): Promise<{ ok: boolean; reason?: string }> {
   let a = await getAccount();
@@ -133,14 +135,39 @@ export async function syncNow(): Promise<{ ok: boolean; reason?: string }> {
   return { ok: true };
 }
 
-/** Coach transport: your own key first; otherwise the hosted coach if your plan includes it. */
-export async function coachTransport(): Promise<{ apiKey: string; baseURL?: string; hosted: boolean } | null> {
-  const { coachApiKey } = (await chrome.storage.local.get('coachApiKey')) as { coachApiKey?: string };
-  if (coachApiKey) {
-    const { settings } = await loadState();
-    return { apiKey: coachApiKey, baseURL: settings.coachBaseUrl || undefined, hosted: false };
+export interface CoachTransport {
+  apiKey: string;
+  baseURL?: string;
+  hosted: boolean;
+  provider: Provider;
+  /** Model for the side-panel chat and for auto-checks, for this provider. */
+  chatModel: string;
+  autoModel: string;
+}
+
+/** Coach transport: your own key for the chosen provider first; otherwise the hosted coach if your plan includes it. */
+export async function coachTransport(): Promise<CoachTransport | null> {
+  const { settings } = await loadState();
+  const provider = providerOf(settings.coachProvider);
+  const keyName = keyStorageName(provider.id);
+  const key = ((await chrome.storage.local.get(keyName)) as Record<string, string | undefined>)[keyName];
+  if (key) {
+    const picked = settings.coachProviderModels?.[provider.id] ?? {};
+    const chatModel = provider.id === 'anthropic' ? settings.coachModel : picked.chat || provider.chat[0].id;
+    return { apiKey: key, baseURL: settings.coachBaseUrl || provider.baseURL, hosted: false, provider, chatModel, autoModel: picked.auto || provider.auto };
   }
+  // The hosted coach only serves Claude, so it always runs the Anthropic models.
   const a = await getAccount();
-  if (a && a.plan && a.plan !== 'free') return { apiKey: a.token, baseURL: `${a.apiBase}/api/coach`, hosted: true };
+  if (a && a.plan && a.plan !== 'free') {
+    const anthropic = PROVIDERS.anthropic;
+    const chatModel = anthropic.chat.some((m) => m.id === settings.coachModel) ? settings.coachModel : anthropic.chat[0].id;
+    return { apiKey: a.token, baseURL: `${a.apiBase}/api/coach`, hosted: true, provider: anthropic, chatModel, autoModel: anthropic.auto };
+  }
   return null;
+}
+
+/** SDK client for a transport. OpenRouter wants a Bearer token and no x-api-key. */
+export function coachClient(t: CoachTransport): Anthropic {
+  const auth = !t.hosted && t.provider.auth === 'bearer' ? { apiKey: null, authToken: t.apiKey } : { apiKey: t.apiKey };
+  return new Anthropic({ ...auth, dangerouslyAllowBrowser: true, ...(t.baseURL ? { baseURL: t.baseURL } : {}) });
 }

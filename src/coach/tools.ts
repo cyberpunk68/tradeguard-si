@@ -96,7 +96,7 @@ export interface ToolOutcome {
   verdict?: VerdictCard;
 }
 
-const NOT_PROPOSABLE = new Set(['coachAutoCheck', 'coachChartCapture', 'enabled', 'customSites', 'disabledAdapters', 'coachBaseUrl', 'coachModel', 'scamApiBase', 'confirmPhrase']);
+const NOT_PROPOSABLE = new Set(['coachAutoCheck', 'coachChartCapture', 'enabled', 'customSites', 'disabledAdapters', 'coachBaseUrl', 'coachModel', 'coachProvider', 'coachProviderModels', 'scamApiBase', 'confirmPhrase']);
 const DAY = 86_400_000;
 const json = (v: unknown) => JSON.stringify(v, (_k, x) => (typeof x === 'number' && !Number.isInteger(x) ? Math.round(x * 100) / 100 : x));
 const iso = (ts: number) => new Date(ts).toISOString().slice(0, 16).replace('T', ' ');

@@ -99,8 +99,12 @@ Open it from the popup or with **⌥⇧K**. It's built for speed: **⚡ Quick ch
 Each card has up to three reasons with numbers, a "Watch" trigger, and one "Do now" action. Tap **Details** for the full breakdown (chart structure, levels, flow, trade math). The coach reads its data through tools: the current page (token stats plus the bundle report), your stats, trade log, check-ins, rules and lockout status, and the last intervention. It can **propose** rule changes as a card with an Apply button. It never changes anything itself, and it can't propose anything during a commitment-mode lockout.
 
 - **Model:** Sonnet 5.5 (`claude-sonnet-5-5`, medium effort) by default. Switch to Opus 5.5 (`claude-opus-5-5`, high effort) for deep reviews.
-- **Key:** for now you paste your own Anthropic API key (⚙ in the panel). It's stored in this browser only, never included in exports, and only sent to Anthropic. Usage bills to your account.
-- **Moving to a backend later:** set `coachBaseUrl` to a proxy that holds the key and handles accounts and rate limits. The client code doesn't change.
+- **Your own key, your choice of provider** (⚙ in the panel, any plan, never metered):
+  - **Anthropic** (default): Claude, with adaptive thinking and prompt caching.
+  - **OpenRouter**: one key for Claude, OpenAI, DeepSeek, Qwen and more. Cheaper picks are listed in the model menu (e.g. GPT-6 Luna, Qwen3.8 Flash, DeepSeek V4 Flash), and any OpenRouter model ID that supports tools works.
+  - **OpenCode Zen**: Claude and Qwen models at Zen prices.
+  - Keys are stored per provider in this browser only, never synced or exported, and sent only to that provider. Thinking and caching run only on Claude models; chart screenshots only go to models that accept images.
+- **Hosted coach (Pro/Ultra):** no key needed; it runs the Claude models.
 - The blocking itself never depends on the model. Rules run locally and instantly, even if the API is down.
 
 ![Coach](docs/screenshots/12-coach.png)
@@ -156,7 +160,9 @@ This code is public so you can check every claim below. Data lives in `chrome.st
 | `isitbundled.com` | You open a token page (scam check on) | The token's public mint/pool address |
 | `api.dexscreener.com` | Before a buy, if the late-entry rule is on | The token's public mint address |
 | Solana RPC (default `api.mainnet-beta.solana.com`, configurable) | Every few minutes, only if you add a trading wallet | Your wallet's **public** address (reads swaps to log P&L) |
-| `api.anthropic.com` | Only when you use the coach with **your own** API key | Your question, plus what the coach looks up: page snapshot, your rules and stats, trade log, optional chart screenshot |
+| `api.anthropic.com` | Only when you use the coach with **your own** Anthropic key (the default provider) | Your question, plus what the coach looks up: page snapshot, your rules and stats, trade log, optional chart screenshot |
+| `openrouter.ai` | Only if you pick **OpenRouter** as the coach provider and save your OpenRouter key (Chrome asks for access then) | Same as the row above. OpenRouter forwards it to the model you choose (e.g. OpenAI, DeepSeek, Qwen, Claude) |
+| `opencode.ai` | Only if you pick **OpenCode Zen** and save your OpenCode key (Chrome asks for access then) | Same as the Anthropic row. Chart screenshots only go to models that accept images |
 | TradeGuard SI server | Only if you link an account (opt-in) | Coach requests on Pro/Ultra (same content as the row above, proxied); token address for the shared token check; and, only if you also tick *sync*, your trades, mood check-ins, lockouts and settings |
 
 - It never asks for or reads private keys, seed phrases, exchange API keys or passwords, and never signs anything.

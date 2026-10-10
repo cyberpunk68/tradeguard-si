@@ -72,6 +72,8 @@ export const DEFAULT_SETTINGS: Settings = {
   preBuyChecklist: true,
   fomoCopyWarning: true,
   coachBaseUrl: '',
+  coachProvider: 'anthropic',
+  coachProviderModels: {},
   lockoutOverride: 'none',
   dailyLossLimitSol: 0,
   maxBuysPerDay: 0,

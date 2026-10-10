@@ -258,8 +258,12 @@ export interface Settings {
   coachAutoCheck: boolean;
   /** Attach a screenshot of the chart to quick checks when Chrome allows it. */
   coachChartCapture: boolean;
-  /** Blank = api.anthropic.com. Set to a proxy URL when moving to a backend. */
+  /** Blank = the provider's own URL. Advanced override (e.g. a local test server). */
   coachBaseUrl: string;
+  /** Whose API your own key is for: 'anthropic' | 'openrouter' | 'opencode'. Local to this browser. */
+  coachProvider: string;
+  /** Chosen models for non-Anthropic providers (Anthropic uses coachModel). Local to this browser. */
+  coachProviderModels: Record<string, { chat?: string; auto?: string }>;
 
   // Gambling-harm protections.
   /** Stop-win: logged profit for the day that ends trading until midnight. 0 = off. */

@@ -250,6 +250,32 @@ try {
   const turnText = firstTurn?.content.find((c) => c.type === 'text')?.text ?? '';
   check('every message carries the live page and trader context', /<live_page>{"site":"Axiom"/.test(turnText) && /<trader>{"limitsInForce"/.test(turnText));
   await panel.screenshot({ path: `${SHOTS}/12-coach.png` });
+
+  // Own key via OpenRouter with a non-Claude, text-only model: Bearer auth, that model, and the
+  // Claude-only features (thinking, effort, prompt caching) and chart images left out.
+  const coachSettings = (await getStore("settings")).settings;
+  await setStore({ settings: { ...coachSettings, coachProvider: 'openrouter', coachProviderModels: { openrouter: { chat: 'deepseek/deepseek-v4-flash' } } }, 'coachKey:openrouter': 'test-or-key' });
+  await panel.reload();
+  await panel.locator('#live.l-on').waitFor({ timeout: 10000 });
+  check('model menu switches to the OpenRouter list', (await panel.locator('#model option:checked').innerText()).includes('DeepSeek'));
+  await panel.getByRole('button', { name: /Quick check/ }).click();
+  let orReq = null;
+  for (let i = 0; i < 40 && orReq?.body?.model !== 'deepseek/deepseek-v4-flash'; i++) {
+    await panel.waitForTimeout(250);
+    orReq = await (await fetch(`http://localhost:${PORT}/__last-request`)).json();
+  }
+  const orBody = orReq.body;
+  check(
+    'OpenRouter key goes as a Bearer token, never as x-api-key',
+    orReq.headers.authorization === 'Bearer test-or-key' && !orReq.headers['x-api-key'],
+  );
+  check(
+    'non-Claude model gets a plain request (no thinking, effort, caching or images)',
+    orBody.model === 'deepseek/deepseek-v4-flash' && !orBody.thinking && !orBody.output_config && typeof orBody.system === 'string' &&
+      !JSON.stringify(orBody.messages).includes('"type":"image"') && orBody.tools.some((t) => t.name === 'show_verdict'),
+  );
+  await setStore({ settings: coachSettings });
+  await sw.evaluate(() => chrome.storage.local.remove('coachKey:openrouter'));
   await panel.close();
 
   // 7. Gambling-harm protections in the browser.

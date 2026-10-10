@@ -78,7 +78,9 @@
     .setup { margin: auto 0; display: grid; gap: 10px; }
     .setup h2 { font-size: 16px; }
     .setup p { margin: 0; color: var(--muted); font-size: 13px; }
-    .setup input { width: 100%; font-family: var(--mono); font-size: 13px; }
+    .setup input, .setup select { width: 100%; min-width: 0; box-sizing: border-box; font-size: 13px; }
+    .setup input { font-family: var(--mono); }
+    .setup .muted { font-size: 12px; }
     .empty { margin: auto 0; text-align: center; color: var(--muted); font-size: 13px; display: grid; gap: 6px; }
     .empty b { color: var(--text); font-size: 15px; }
 
@@ -116,7 +118,7 @@
       <textarea id="input" rows="1" placeholder="Ask your coach…  (Enter to send)"></textarea>
       <button id="send" class="primary">Send</button>
     </div>
-    <div class="fine">Not financial advice. When the coach looks something up, that data goes to Anthropic with your API key.</div>
+    <div class="fine">Not financial advice. When the coach looks something up, that data goes to <span id="dataTo">Anthropic</span>.</div>
   </footer>
   <script src="sidepanel.js"></script>
 </body>

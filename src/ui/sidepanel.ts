@@ -10,7 +10,8 @@ import { COACH_TOOLS, runCoachTool, type Proposal, type VerdictCard } from '../c
 import { COACH_MODELS } from '../core/defaults';
 import { snapshotForPrompt, type LiveSnapshot } from '../core/live';
 import { isLocked, loadState, saveSettings } from '../storage';
-import { coachTransport, getAccount } from '../account';
+import { coachClient, coachTransport, getAccount } from '../account';
+import { acceptsImages, isClaude, keyStorageName, PROVIDERS, providerOf } from '../coach/providers';
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const log = $('log');
@@ -153,19 +154,36 @@ function renderEmpty() {
 async function renderKeySetup(show: boolean) {
   log.replaceChildren();
   if (!show) return renderHistory();
-  const box = node('div', 'setup card');
+  const { settings } = await loadState();
+  const provider = providerOf(settings.coachProvider);
+  const keyName = keyStorageName(provider.id);
+  const hasKey = !!((await chrome.storage.local.get(keyName)) as Record<string, string | undefined>)[keyName];
   const acct = await getAccount();
   const hosted = acct?.plan && acct.plan !== 'free';
+
+  const box = node('div', 'setup card');
   box.append(
-    node('h2', '', hosted ? 'Coach connected' : 'Connect Claude'),
+    node('h2', '', hasKey ? `Coach: your ${provider.label.split(' (')[0]} key` : hosted ? 'Coach connected' : 'Connect a coach'),
     node('p', '', hosted
-      ? `Using your ${acct!.plan === 'ultra' ? 'Ultra' : 'Pro'} plan's hosted coach. Optionally paste your own Anthropic key to use it instead (unmetered, billed by Anthropic).`
-      : 'Paste your Anthropic API key (console.anthropic.com → API keys). It stays in this browser and is only sent to Anthropic. Or link a Pro/Ultra account in TradeGuard SI settings to use the hosted coach, no key needed.'),
+      ? `Using your ${acct!.plan === 'ultra' ? 'Ultra' : 'Pro'} plan's hosted coach. Optionally use your own key instead (unmetered, billed by that provider).`
+      : 'Use your own API key. It stays in this browser and is only sent to the provider you pick. Or link a Pro/Ultra account in TradeGuard SI settings to use the hosted coach, no key needed.'),
   );
+
+  const pick = node('select');
+  pick.setAttribute('aria-label', 'Provider');
+  for (const p of Object.values(PROVIDERS)) pick.append(new Option(p.label, p.id, false, p.id === provider.id));
+  pick.addEventListener('change', async () => {
+    await saveSettings({ coachProvider: pick.value });
+    await renderModelMenu();
+    await renderKeySetup(true);
+  });
+
   const field = node('input');
   field.type = 'password';
-  field.placeholder = 'sk-ant-…';
+  field.placeholder = hasKey ? 'Key saved. Paste a new one to replace it' : provider.keyPlaceholder;
   field.autocomplete = 'off';
+  const help = node('p', 'muted', provider.keyHelp);
+
   const row = node('div');
   row.style.cssText = 'display:flex;gap:8px;justify-content:flex-end';
   const save = node('button', 'primary', 'Save key');
@@ -173,17 +191,68 @@ async function renderKeySetup(show: boolean) {
   save.addEventListener('click', async () => {
     const k = field.value.trim();
     if (!k) return;
-    await chrome.storage.local.set({ coachApiKey: k });
+    // Ask for this provider's site access first, while the click still counts as a user gesture.
+    if (provider.origin && !(await chrome.permissions.request({ origins: [provider.origin] }))) {
+      help.textContent = `Chrome needs permission to reach ${new URL(provider.origin.replace('/*', '')).host} for the coach to use it.`;
+      return;
+    }
+    await chrome.storage.local.set({ [keyName]: k });
     field.value = '';
+    await renderModelMenu();
     await renderKeySetup(false);
   });
   remove.addEventListener('click', async () => {
-    await chrome.storage.local.remove('coachApiKey');
+    await chrome.storage.local.remove(keyName);
     field.value = '';
+    await renderKeySetup(true);
   });
   row.append(remove, save);
-  box.append(field, row);
+  box.append(pick, field, help, row);
+
+  if (provider.id !== 'anthropic') {
+    // Any model ID from the provider works if it supports tool use; the menu just lists tested picks.
+    const picked = settings.coachProviderModels?.[provider.id] ?? {};
+    const custom = node('input');
+    custom.placeholder = 'Custom chat model ID (optional)';
+    custom.title = `Any ${provider.label.split(' (')[0]} model ID that supports tools, e.g. ${provider.chat[0].id}`;
+    custom.value = provider.chat.some((m) => m.id === picked.chat) ? '' : (picked.chat ?? '');
+    const auto = node('input');
+    auto.placeholder = `Auto-check: ${provider.auto}`;
+    auto.title = 'Model for the quick verdict when you open a new token. Leave blank for the default.';
+    auto.value = picked.auto && picked.auto !== provider.auto ? picked.auto : '';
+    const saveModels = async () => {
+      const next = { ...picked, ...(custom.value.trim() ? { chat: custom.value.trim() } : {}), auto: auto.value.trim() || undefined };
+      await saveSettings({ coachProviderModels: { ...settings.coachProviderModels, [provider.id]: next } });
+      await renderModelMenu();
+    };
+    custom.addEventListener('change', saveModels);
+    auto.addEventListener('change', saveModels);
+    box.append(
+      node('p', 'muted', 'Adaptive thinking and prompt caching only run on Claude models. Chart screenshots only go to models that accept images; other models read the page numbers.'),
+      custom,
+      auto,
+    );
+  }
   log.append(box);
+}
+
+/** The header model menu lists the models of whichever provider the coach is using right now. */
+async function renderModelMenu() {
+  const sel = $<HTMLSelectElement>('model');
+  const t = await coachTransport();
+  const { settings } = await loadState();
+  // No usable key or plan yet: show the chosen provider's list so picking a model still works.
+  const provider = t?.provider ?? providerOf(settings.coachProvider);
+  const current = t?.chatModel ?? (provider.id === 'anthropic' ? settings.coachModel : settings.coachProviderModels?.[provider.id]?.chat || provider.chat[0].id);
+  $('dataTo').textContent = t?.hosted ? 'the TradeGuard SI coach (then Anthropic)' : `${provider.label.split(' (')[0]} with your API key`;
+  sel.replaceChildren(...provider.chat.map((m) => new Option(m.label, m.id, false, m.id === current)));
+  if (!provider.chat.some((m) => m.id === current)) sel.append(new Option(current, current, true, true));
+  sel.onchange = async () => {
+    const { settings } = await loadState();
+    if (provider.id === 'anthropic') return void (await saveSettings({ coachModel: sel.value }));
+    const picked = settings.coachProviderModels?.[provider.id] ?? {};
+    await saveSettings({ coachProviderModels: { ...settings.coachProviderModels, [provider.id]: { ...picked, chat: sel.value } } });
+  };
 }
 
 // ---------- live page connection ----------
@@ -314,11 +383,11 @@ chrome.storage.onChanged.addListener((c, area) => {
 const WANTS_CHART = /quick check|breakdown|details|chart|entry|setup|level/i;
 
 /** User turn = [chart screenshot?] + live page + trader context + their words. */
-async function userTurn(text: string): Promise<Anthropic.MessageParam> {
+async function userTurn(text: string, images: boolean): Promise<Anthropic.MessageParam> {
   const { settings, trades, moods, lockout } = await loadState();
   const content: Anthropic.ContentBlockParam[] = [];
   if (live && Date.now() - live.ts < 15_000) {
-    if (settings.coachChartCapture && WANTS_CHART.test(text)) {
+    if (images && settings.coachChartCapture && WANTS_CHART.test(text)) {
       const img = await captureChart(liveWindow);
       if (img) content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: img } });
     }
@@ -330,12 +399,6 @@ async function userTurn(text: string): Promise<Anthropic.MessageParam> {
 
 // ---------- the loop ----------
 
-async function client(): Promise<Anthropic | null> {
-  const t = await coachTransport();
-  if (!t) return null;
-  // Your own key goes straight to Anthropic; on Pro/Ultra the device token goes to TradeGuard SI's proxy.
-  return new Anthropic({ apiKey: t.apiKey, dangerouslyAllowBrowser: true, ...(t.baseURL ? { baseURL: t.baseURL } : {}) });
-}
 
 async function persist() {
   // Trim from the front at a clean boundary (a plain user message) so tool_use/tool_result pairs stay intact.
@@ -351,46 +414,50 @@ async function persist() {
   await chrome.storage.local.set({ coachMessages: slim });
 }
 
-function friendlyError(err: unknown): string {
-  if (err instanceof Anthropic.AuthenticationError) return 'Your API key was rejected. Check it under ⚙.';
+function friendlyError(err: unknown, who = 'Claude API'): string {
+  if (err instanceof Anthropic.AuthenticationError) return `${who} rejected your API key. Check it under ⚙.`;
   if (err instanceof Anthropic.RateLimitError) return 'Rate limited by the API. Wait a moment and try again.';
-  if (err instanceof Anthropic.APIConnectionError) return 'Could not reach the Claude API. Check your connection.';
+  if (err instanceof Anthropic.APIConnectionError) return `Could not reach ${who}. Check your connection.`;
+  if (err instanceof Anthropic.NotFoundError || (err instanceof Anthropic.BadRequestError && /model|tool/i.test(err.message)))
+    return `${who} couldn't run that model with tools (${err.message}). Pick another model in the menu above.`;
   if (err instanceof Anthropic.APIError && (err.status === 402 || err.status === 403)) {
     const body = err.error as { error?: { message?: string } } | undefined;
     return body?.error?.message ?? 'This needs a higher plan.';
   }
-  if (err instanceof Anthropic.APIError) return `Claude API error (${err.status ?? '?'}): ${err.message}`;
+  if (err instanceof Anthropic.APIError) return `${who} error (${err.status ?? '?'}): ${err.message}`;
   return (err as Error)?.message ?? String(err);
 }
 
 async function send(text: string) {
   text = text.trim();
   if (!text || busy) return;
-  const api = await client();
-  if (!api) return renderKeySetup(true);
+  const t = await coachTransport();
+  if (!t) return renderKeySetup(true);
+  const api = coachClient(t);
+  const claude = isClaude(t.chatModel);
   busy = true;
   $<HTMLButtonElement>('send').disabled = true;
   if (!messages.length) log.replaceChildren();
 
   const checkpoint = messages.length;
-  messages.push(await userTurn(text));
+  messages.push(await userTurn(text, acceptsImages(t.provider, t.chatModel)));
   log.append(node('div', 'msg user', text));
   const thinking = node('div', 'thinking', 'Thinking');
   log.append(thinking);
   scroll();
 
-  const { settings } = await loadState();
-  const preset = COACH_MODELS.find((m) => m.id === settings.coachModel) ?? COACH_MODELS[0];
+  const effort = COACH_MODELS.find((m) => m.id === t.chatModel)?.effort ?? 'medium';
+  const who = t.hosted ? 'The TradeGuard SI coach' : t.provider.id === 'anthropic' ? 'Claude API' : t.provider.label.split(' (')[0];
   try {
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+      // Thinking, effort and prompt caching are Claude features; other models get a plain request.
       const stream = api.messages.stream({
-        model: settings.coachModel,
+        model: t.chatModel,
         max_tokens: 16000,
-        system: [{ type: 'text', text: COACH_SYSTEM, cache_control: { type: 'ephemeral' } }],
+        system: claude ? [{ type: 'text', text: COACH_SYSTEM, cache_control: { type: 'ephemeral' } }] : COACH_SYSTEM,
         tools: COACH_TOOLS,
         messages,
-        thinking: { type: 'adaptive' },
-        output_config: { effort: preset.effort },
+        ...(claude ? { thinking: { type: 'adaptive' as const }, output_config: { effort } } : {}),
       });
       let bubble: HTMLDivElement | null = null;
       let acc = '';
@@ -428,7 +495,7 @@ async function send(text: string) {
     await persist();
   } catch (err) {
     messages = messages.slice(0, checkpoint); // keep history valid for the next attempt
-    log.insertBefore(node('div', 'err', friendlyError(err)), thinking);
+    log.insertBefore(node('div', 'err', friendlyError(err, who)), thinking);
   } finally {
     thinking.remove();
     busy = false;
@@ -441,11 +508,7 @@ async function send(text: string) {
 // ---------- wiring ----------
 
 async function init() {
-  const { settings } = await loadState();
-  const sel = $<HTMLSelectElement>('model');
-  for (const m of COACH_MODELS) sel.append(new Option(m.label, m.id, false, m.id === settings.coachModel));
-  if (!COACH_MODELS.some((m) => m.id === settings.coachModel)) sel.append(new Option(settings.coachModel, settings.coachModel, true, true));
-  sel.addEventListener('change', () => void saveSettings({ coachModel: sel.value }));
+  await renderModelMenu();
 
   messages = ((await chrome.storage.local.get('coachMessages')) as { coachMessages?: Anthropic.MessageParam[] }).coachMessages ?? [];
   await renderKeySetup(!(await coachTransport()));

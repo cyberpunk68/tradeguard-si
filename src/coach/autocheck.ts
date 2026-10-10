@@ -2,7 +2,8 @@
 // Runs in the service worker so it works with the side panel closed ("installed" mode).
 import Anthropic from '@anthropic-ai/sdk';
 import { snapshotForPrompt, type LiveSnapshot } from '../core/live';
-import { coachTransport, getAccount } from '../account';
+import { coachClient, coachTransport, getAccount } from '../account';
+import { acceptsImages, isClaude } from './providers';
 import { rulesVerdict } from './rules-verdict';
 import { loadState } from '../storage';
 import { captureChart } from './chart';
@@ -21,8 +22,6 @@ export interface AutoCheckResult {
   /** rules = decided locally, no AI · shared = cached token read · ai = fresh AI call */
   source: 'rules' | 'shared' | 'ai';
 }
-
-const HAIKU = 'claude-haiku-5-5';
 
 export async function autoCheck(snap: LiveSnapshot, windowId?: number): Promise<AutoCheckResult | { skipped: string }> {
   const state = await loadState();
@@ -64,9 +63,10 @@ export async function autoCheck(snap: LiveSnapshot, windowId?: number): Promise<
     withChart = !!image && j.source === 'ai-chart';
     source = j.source === 'shared-cache' ? 'shared' : 'ai';
   } else {
-    // 3. Your own key: a direct Haiku call with the live page and your context (you pay Anthropic).
-    const image = settings.coachChartCapture ? await captureChart(windowId) : null;
-    const client = new Anthropic({ apiKey: transport.apiKey, dangerouslyAllowBrowser: true, ...(transport.baseURL ? { baseURL: transport.baseURL } : {}) });
+    // 3. Your own key: one short call to your provider's auto-check model (you pay the provider).
+    const model = transport.autoModel;
+    const image = settings.coachChartCapture && acceptsImages(transport.provider, model) ? await captureChart(windowId) : null;
+    const client = coachClient(transport);
     const content: Anthropic.ContentBlockParam[] = [];
     if (image) content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: image } });
     content.push({
@@ -74,9 +74,9 @@ export async function autoCheck(snap: LiveSnapshot, windowId?: number): Promise<
       text: `Auto-check: I just opened this token and may buy soon. Give me the verdict card now.${image ? ' The screenshot is my chart right now.' : ''}\n<live_page>${snapshotForPrompt(snap)}</live_page>\n<trader>${traderContext(state)}</trader>`,
     });
     const msg = await client.messages.create({
-      model: HAIKU,
+      model,
       max_tokens: 1500,
-      system: [{ type: 'text', text: COACH_SYSTEM, cache_control: { type: 'ephemeral' } }],
+      system: isClaude(model) ? [{ type: 'text', text: COACH_SYSTEM, cache_control: { type: 'ephemeral' } }] : COACH_SYSTEM,
       tools: [SHOW_VERDICT_TOOL],
       messages: [{ role: 'user', content }],
     });
