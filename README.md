@@ -8,6 +8,10 @@ Tools like lockin.trade coach you *after* the fact, from read-only API data. Tra
 
 ## Install (unpacked)
 
+Download [TradeGuard SI v0.2.0](https://github.com/cyberpunk68/tradeguard-si/releases/tag/v0.2.0) and unzip `tradeguard.zip`. Open `chrome://extensions`, enable Developer mode, choose **Load unpacked**, and select the extracted folder containing `manifest.json`. Free guardrails do not require an account or an AI key. Chrome Web Store publication is pending.
+
+To build from source instead:
+
 ```bash
 npm install
 npm run build
