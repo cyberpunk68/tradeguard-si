@@ -11,7 +11,7 @@ const RULE_LABEL: Record<RuleId, string> = {
   dailyLoss: 'Daily loss', tilt: 'Tilt', lockout: 'Locked out', mood: 'Mood', gate: 'Entry gate', scam: 'Scam check',
   stopWin: 'Goal hit', weeklyLoss: 'Weekly loss', monthlyLoss: 'Monthly loss', stopOuts: 'Losses/day', quietHours: 'Late night',
   screenTime: 'Screen time', sessionBreak: 'Break', realityCheck: 'Reality check', rapidFire: 'Rapid-fire', escalation: 'Doubling up',
-  heater: 'Heater', afterWin: 'After big win', bankroll: 'Bankroll cap', bigSize: 'Big size', sameTokenRebuy: 'Same-token rebuy', fomoCopy: 'FOMO copy', checklist: 'Pre-buy check', dailyLossSol: 'SOL loss cap', maxBuys: 'Buys/day', openPositions: 'Open positions', aSetupLimit: 'A-setup limit', reentry: 'Re-entry', tokenEntries: 'Entries/token', riskBudget: 'Risk budget', lateEntry: 'Late entry',
+  heater: 'Heater', afterWin: 'After big win', bankroll: 'Bankroll cap', bigSize: 'Big size', sameTokenRebuy: 'Same-token rebuy', fomoCopy: 'FOMO copy', checklist: 'Pre-buy check', dailyLossSol: 'SOL loss cap', maxBuys: 'Buys/day', openPositions: 'Open positions', aSetupLimit: 'A-setup limit', reentry: 'Re-entry', tokenEntries: 'Entries/token', riskBudget: 'Risk budget', lateEntry: 'Late entry', manualSell: 'Sold a winner early',
 };
 
 let days = 30;

@@ -62,4 +62,6 @@ if (typeof document !== 'undefined') {
   };
   document.getElementById('buyBtn').addEventListener('click', () => place('buy'));
   document.getElementById('sellBtn').addEventListener('click', () => place('sell'));
+  document.getElementById('sell25').addEventListener('click', () => place('sell'));
+  document.getElementById('sell100').addEventListener('click', () => place('sell'));
 }

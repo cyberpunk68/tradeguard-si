@@ -85,6 +85,7 @@ export const DEFAULT_SETTINGS: Settings = {
   tokenReentryCooldownMin: 0,
   maxEntriesPerTokenPerDay: 0,
   stopLossPct: 30,
+  manualSellMaxPct: 0,
   lateEntryPct: 0,
   siteBlockOnLockout: true,
   rulesLocked: false,
@@ -114,6 +115,8 @@ export const MEMECOIN_PRESET: Partial<import('./types').Settings> = {
   tokenReentryCooldownMin: 30,
   maxEntriesPerTokenPerDay: 2,
   stopLossPct: 30,
+  // Rule 8: manual sell only on a thesis break; otherwise 40% max.
+  manualSellMaxPct: 40,
   lateEntryPct: 500,
   bigWinUsd: 50,
   cooldownAfterWinMin: 60,
@@ -129,7 +132,7 @@ export const MEMECOIN_PRESET: Partial<import('./types').Settings> = {
 };
 
 /** "Pick one system": two coherent plans where one stop-out can never exceed the daily cap. */
-export const SYSTEM_PRESETS: { id: 'conviction' | 'smallfew'; name: string; blurb: string; settings: Partial<import('./types').Settings> }[] = [
+export const SYSTEM_PRESETS: { id: 'conviction' | 'smallfew' | 'runner'; name: string; blurb: string; settings: Partial<import('./types').Settings> }[] = [
   {
     id: 'conviction',
     name: 'Conviction: 1 trade a day',
@@ -141,5 +144,12 @@ export const SYSTEM_PRESETS: { id: 'conviction' | 'smallfew'; name: string; blur
     name: 'Small & few: ≤0.5 SOL, 3 a day',
     blurb: 'Size 0.4–0.5 SOL, at most 3 trades. A −30% stop costs ≤0.15 SOL, so the 0.5 SOL cap survives three stops.',
     settings: { ...MEMECOIN_PRESET, maxBuysPerDay: 3, maxEntriesPerTokenPerDay: 1, maxOpenPositions: 1, dailyLossLimitSol: 0.5, typedConfirmAboveSol: 0.5, aSetupSizeSol: 0.5, maxASetupsPerDay: 0, stopLossPct: 30 },
+  },
+  {
+    id: 'runner',
+    name: 'Let it run: exits set, hands off',
+    blurb:
+      'Runners are rare and look like dead coins at entry, so the exit decides the payoff. −25% stop; by hand you take at most 40% of a winner, and sell the rest only on a thesis break (lower low on rising volume, dev or insider sell, liquidity drop). Process, not financial advice.',
+    settings: { ...MEMECOIN_PRESET, stopLossPct: 25, manualSellMaxPct: 40 },
   },
 ];

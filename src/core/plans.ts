@@ -38,7 +38,7 @@ export const PLANS: Record<PlanId, Plan> = {
       'Order blocking: size, leverage, overtrading, revenge, chasing',
       'Memecoin entry gate + bundled-launch scam check',
       'Lockouts, commitment mode, mood check-ins, dashboard',
-      'AI coach with your own Anthropic key',
+      'AI coach with your own Anthropic, OpenRouter or OpenCode key',
     ],
     limits: { hostedAI: false, autoChecksPerMonth: 0, chatMessagesPerMonth: 0, deepReviewsPerMonth: 0, chartOnAutoCheck: false, telegram: false, sync: false, historyDays: 30 },
   },
@@ -59,7 +59,7 @@ export const PLANS: Record<PlanId, Plan> = {
   ultra: {
     id: 'ultra',
     name: 'Ultra',
-    priceUsd: 29,
+    priceUsd: 49,
     tagline: 'For traders who live in the terminal.',
     features: [
       'Everything in Pro',
@@ -98,7 +98,7 @@ export function allowance(planId: PlanId, usage: Usage, kind: UsageKind, byok: b
   if (byok) return { ok: true, metered: false, remaining: null };
   const plan = PLANS[planId];
   if (!plan.limits.hostedAI) {
-    return { ok: false, reason: 'The hosted coach is part of Pro and Ultra. Add your own Anthropic key to use the coach on Free.', upgradeTo: 'pro' };
+    return { ok: false, reason: 'The hosted coach is part of Pro and Ultra. Add your own API key to use the coach on Free.', upgradeTo: 'pro' };
   }
   const limit = plan.limits[LIMIT_KEY[kind]] as number;
   const used = usage[kind] ?? 0;

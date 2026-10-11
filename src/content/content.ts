@@ -11,7 +11,8 @@ import { currentMood } from '../core/mood';
 import { scamFindings } from '../core/token-rules';
 import type { LockoutKind, OrderIntent, ScamReport, Settings, TradeRecord } from '../core/types';
 import { addMood, addSave, addTrade, isLocked, loadState, pendingOutcome, startLockout, uid, updateTrade, type StoredState } from '../storage';
-import { checklist, coachChip, intervene, preflight, riskChip, toast } from './overlay';
+import { checklist, coachChip, intervene, preflight, riskChip, sellCheck, toast } from './overlay';
+import { manualSellCheck, THESIS_BREAKS } from '../core/exit-rules';
 import { startOfDay } from '../core/rules';
 import { siteBlockActive } from '../core/site-block';
 
@@ -388,6 +389,7 @@ async function main() {
     intent.tokenAddress = address;
     intent.fomoHits = fomoHits;
     const entryPrice = adapter!.readPrice();
+    intent.price = entryPrice;
     if (address && s.lateEntryPct > 0 && intent.side !== 'sell') {
       intent.marketData = await Promise.race([
         chrome.runtime.sendMessage({ type: 'marketData', address }).catch(() => null),
@@ -483,6 +485,22 @@ async function main() {
       }
     }
 
+    // Rule 8: selling a winner by hand needs a thesis break, or stays within the cap.
+    let exitReason: TradeRecord['exitReason'];
+    let sellNote: string | undefined;
+    const sc = manualSellCheck({ now: Date.now(), intent, settings: state.settings, trades: state.trades, mood: currentMood(state.moods, Date.now()), lockout: state.lockout });
+    if (sc) {
+      const r = await sellCheck({ ...sc, symbol: intent.symbol, reasons: THESIS_BREAKS });
+      if (!r.go) {
+        await addSave({ ts: Date.now(), site: intent.site, rules: ['manualSell'], notional: intent.notional, unit: intent.unit });
+        toast(`Held. Sell ${sc.cap}% at most and let the plan run.`, 'info', 4000);
+        return;
+      }
+      const brk = THESIS_BREAKS.find((b) => b.id === r.reason);
+      exitReason = brk ? brk.id : 'manual';
+      sellNote = `Manual sell ${sc.sellPct != null ? sc.sellPct + '%' : '≤' + sc.cap + '%'} at +${sc.gainPct.toFixed(0)}%: ${brk ? brk.label : 'no thesis break'}`;
+    }
+
     const record: TradeRecord = {
       id: uid(),
       ts: Date.now(),
@@ -500,6 +518,7 @@ async function main() {
       moodScore: mood?.score ?? null,
       moodTags: mood?.tags ?? [],
       ...(preTradeCard ? { note: preTradeCard } : {}),
+      ...(sellNote ? { note: sellNote, exitReason } : {}),
     };
     await addTrade(record);
     replay(control);

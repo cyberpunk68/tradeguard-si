@@ -10,11 +10,11 @@ const isLocal = (pattern) => /^https?:\/\/(localhost|127\.0\.0\.1)[/:]/.test(pat
 rmSync('dist', { recursive: true, force: true });
 mkdirSync('dist', { recursive: true });
 cpSync('public', 'dist', { recursive: true });
-// The extension may call its own backend; grant exactly that origin.
+// Keep the original backend origin for installations linked before the custom-domain cutover.
 {
-  const api = new URL(process.env.TG_API_BASE ?? 'https://tradeguard-blond.vercel.app');
+  const api = new URL(process.env.TG_API_BASE ?? 'https://tradeguard.si');
   const manifest = JSON.parse(readFileSync('dist/manifest.json', 'utf8'));
-  manifest.host_permissions = [...new Set([...(manifest.host_permissions ?? []), `${api.origin}/*`])];
+  manifest.host_permissions = [...new Set([...(manifest.host_permissions ?? []), `${api.origin}/*`, 'https://tradeguard-blond.vercel.app/*'])];
   if (store) {
     manifest.host_permissions = manifest.host_permissions.filter((p) => !isLocal(p));
     for (const list of [manifest.content_scripts ?? [], manifest.web_accessible_resources ?? []]) {
@@ -44,7 +44,7 @@ const options = {
   sourcemap: watch ? 'inline' : false,
   minify: !watch,
   logLevel: 'info',
-  define: { __TG_STORE__: JSON.stringify(store), __TG_API_BASE__: JSON.stringify(process.env.TG_API_BASE ?? 'https://tradeguard-blond.vercel.app') },
+  define: { __TG_STORE__: JSON.stringify(store), __TG_API_BASE__: JSON.stringify(process.env.TG_API_BASE ?? 'https://tradeguard.si') },
 };
 
 if (watch) {

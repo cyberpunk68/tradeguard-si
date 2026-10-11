@@ -29,6 +29,10 @@ export interface OrderIntent {
   fomoHits?: string[];
   /** Public market data for the token (DexScreener): % change windows and pair age. */
   marketData?: { h1: number | null; h6: number | null; h24: number | null; ageMin: number | null } | null;
+  /** Price (or market cap, same scale as TradeRecord.entryPrice) at the moment of the click. */
+  price?: number | null;
+  /** Share of the position a sell is for, 0–100, when the page shows it ("Sell 50%", a % chip or input). */
+  sellPct?: number | null;
 }
 
 /** Read from the page. Every field is null when the page doesn't show it. */
@@ -83,7 +87,7 @@ export interface ScamReport {
 }
 
 export type Outcome = 'win' | 'loss' | 'breakeven';
-export type ExitReason = 'stop' | 'target' | 'trailing' | 'devSell' | 'time' | 'manual';
+export type ExitReason = 'stop' | 'target' | 'trailing' | 'devSell' | 'time' | 'manual' | 'thesisBreak' | 'liquidity';
 
 export interface TradeRecord {
   id: string;
@@ -173,6 +177,7 @@ export type RuleId =
   | 'sameTokenRebuy'
   | 'fomoCopy'
   | 'checklist'
+  | 'manualSell'
   | 'dailyLossSol'
   | 'maxBuys'
   | 'openPositions'
@@ -330,6 +335,8 @@ export interface Settings {
   maxEntriesPerTokenPerDay: number;
   /** Your stop-loss distance (%). A buy is blocked if a stop-out would exceed what's left of the daily SOL cap. */
   stopLossPct: number;
+  /** Selling more than this % of a winning position by hand needs a thesis-break reason. 0 = off. */
+  manualSellMaxPct: number;
   /** Block buys after the token already ran this much (% over 1h/6h/24h, or since launch). 0 = off. */
   lateEntryPct: number;
   /** During significant lockouts, trading sites don't load at all (redirected to a "closed" page). */

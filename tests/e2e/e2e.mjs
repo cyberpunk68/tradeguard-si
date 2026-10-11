@@ -300,12 +300,46 @@ try {
   await po.getByRole('button', { name: 'I found it' }).click();
   await po.getByRole('button', { name: 'Yes' }).click();
   check('pre-trade card is required before buying', await po.getByRole('button', { name: 'Continue to buy' }).isDisabled());
+  await po.getByRole('button', { name: 'Higher lows', exact: true }).click();
+  await po.getByRole('button', { name: 'Volume building' }).click();
   await po.getByPlaceholder(/Thesis in one sentence/).fill('Higher low after flush, 3 green 1m candles, early not late');
   await po.getByPlaceholder(/Invalidation/).fill('$48K');
   await po.getByRole('button', { name: 'Continue to buy' }).click();
   await pp.waitForTimeout(500);
   check('3-line check: three yeses + a card let the buy through', (await pOrders()) === 1);
   check('the pre-trade card is saved with the trade', ((await getStore('trades')).trades.at(-1)?.note ?? '').includes('Invalidation: $48K'));
+  check('the entry journal (structure + volume) is logged for the 20-trade review', ((await getStore('trades')).trades.at(-1)?.note ?? '').startsWith('Higher lows | Volume building |'));
+
+  // Rule 8: manual sell of a winner only on a thesis break; otherwise 40% max.
+  const preSell = (await getStore('settings')).settings;
+  await setStore({
+    settings: { ...preSell, manualSellMaxPct: 40, askLastOutcome: false, requireMoodCheckIn: false, preBuyChecklist: false },
+    lockout: null,
+    trades: [{ id: 'w1', ts: Date.now() - 10 * 60_000, site: 'axiom', symbol: 'GOOD', token: GOOD, side: 'buy', unit: 'SOL', notional: 0.5, leverage: null, friction: 0, hits: [], overrode: false, moodScore: 4, moodTags: [], entryPrice: 1_500_000 }],
+  });
+  await pp.reload();
+  await pp.waitForTimeout(600);
+  await pp.locator('#sell100').click();
+  await po.getByText(/Is the thesis broken/).waitFor({ timeout: 5000 });
+  await po.getByRole('button', { name: /just nervous/ }).click();
+  check('rule 8: gain uses matching market-cap units', /^You.re up (?:[3-5]\d)%/.test(await po.locator('h2').innerText()));
+  check('rule 8: selling 100% of a winner with no thesis break is held', await po.getByRole('button', { name: 'Sell', exact: true }).isDisabled());
+  await pp.waitForTimeout(350);
+  await pp.screenshot({ path: `${SHOTS}/19-sell-check.png` });
+  await po.getByRole('button', { name: /Cancel and sell/ }).click();
+  await pp.waitForTimeout(300);
+  check('rule 8: cancelling keeps the position', (await pOrders()) === 0);
+  await pp.locator('#sell100').click();
+  await po.getByText(/Is the thesis broken/).waitFor({ timeout: 5000 });
+  await po.getByRole('button', { name: 'Dev or insider sold' }).click();
+  await po.getByRole('button', { name: 'Sell', exact: true }).click();
+  await pp.waitForTimeout(500);
+  const soldRec = (await getStore('trades')).trades.at(-1);
+  check('rule 8: a thesis-break sell goes through and logs the reason', (await pOrders()) === 1 && soldRec?.exitReason === 'devSell' && (soldRec?.note ?? '').includes('Dev or insider sold'));
+  await pp.locator('#sell25').click();
+  await pp.waitForTimeout(500);
+  check('rule 8: trimming 25% of a winner passes without a question', (await pOrders()) === 2);
+  await setStore({ settings: preSell, trades: [] });
 
   // FOMO copy in the callout feed is flagged on page load.
   await pp.goto(`http://localhost:${PORT}/axiom/meme/${WHALE}`);

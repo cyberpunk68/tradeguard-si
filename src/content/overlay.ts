@@ -528,6 +528,23 @@ export function checklist(opts: { limitsLine: string; limitsOk: boolean; symbol:
     // The pre-trade card: one-sentence thesis + invalidation, logged with the trade to test later.
     const cardBox = el('div', 'pending');
     cardBox.append(el('div', 'pending-q', 'Pre-trade card'));
+    // Two taps for the 20-trade review: which signal, if any, separates your winners from your losers.
+    const journal: Record<'structure' | 'volume', string | null> = { structure: null, volume: null };
+    const tap = (key: 'structure' | 'volume', options: string[]) => {
+      const row = el('div', 'seg seg-2');
+      for (const label of options) {
+        const b = el('button', 'seg-btn', label);
+        b.addEventListener('click', () => {
+          journal[key] = label;
+          row.querySelectorAll('.seg-btn').forEach((x) => x.classList.toggle('on', x === b));
+          sync();
+        });
+        row.append(b);
+      }
+      cardBox.append(row);
+    };
+    tap('structure', ['Higher lows', 'No higher lows']);
+    tap('volume', ['Volume building', 'Volume fading']);
     const thesis = el('input', 'input') as HTMLInputElement;
     thesis.placeholder = 'Thesis in one sentence: why this, why now (not after the +1,000%)';
     const inval = el('input', 'input') as HTMLInputElement;
@@ -542,9 +559,9 @@ export function checklist(opts: { limitsLine: string; limitsOk: boolean; symbol:
     card.append(msg, actions);
     const sync = () => {
       const no = answers.indexOf(false);
-      const cardOk = thesis.value.trim().length >= 15 && inval.value.trim().length >= 2;
+      const cardOk = !!journal.structure && !!journal.volume && thesis.value.trim().length >= 15 && inval.value.trim().length >= 2;
       buy.disabled = !opts.limitsOk || answers.includes(null) || no >= 0 || !cardOk;
-      msg.textContent = no === 0 ? 'A callout sent you. That copy is built to trigger FOMO. Skip.' : no === 1 ? 'You’d be buying late, after the smart money. Skip.' : !opts.limitsOk ? 'You’ve hit a limit today. Skip.' : !cardOk && !answers.includes(null) ? 'Write the thesis and the invalidation before you buy.' : '';
+      msg.textContent = no === 0 ? 'A callout sent you. That copy is built to trigger FOMO. Skip.' : no === 1 ? 'You’d be buying late, after the smart money. Skip.' : !opts.limitsOk ? 'You’ve hit a limit today. Skip.' : !cardOk && !answers.includes(null) ? 'Tap structure and volume, then write the thesis and the invalidation.' : '';
     };
     thesis.addEventListener('input', () => sync());
     inval.addEventListener('input', () => sync());
@@ -557,8 +574,65 @@ export function checklist(opts: { limitsLine: string; limitsOk: boolean; symbol:
     buy.addEventListener('click', () => {
       if (buy.disabled) return;
       close();
-      resolve({ pass: true, failed: null, card: `Thesis: ${thesis.value.trim().slice(0, 200)} | Invalidation: ${inval.value.trim().slice(0, 60)}` });
+      resolve({ pass: true, failed: null, card: `${journal.structure} | ${journal.volume} | Thesis: ${thesis.value.trim().slice(0, 200)} | Invalidation: ${inval.value.trim().slice(0, 60)}` });
     });
     skip.focus();
+  });
+}
+
+// ---------- Rule 8: selling a winner by hand ----------
+
+/**
+ * "Manual sell only on a thesis break; otherwise {cap}% max." Pick the break you can actually see, or
+ * keep the sell to the cap and let the stop and the runner rule handle the rest.
+ */
+export function sellCheck(opts: { gainPct: number; sellPct: number | null; cap: number; symbol: string | null; reasons: readonly { id: string; label: string }[] }): Promise<{ go: boolean; reason: string | null }> {
+  return new Promise((resolve) => {
+    const { card, close } = openModal('calm');
+    const sizeKnown = opts.sellPct != null;
+    header(card, 2, `You're up ${opts.gainPct.toFixed(0)}%. Is the thesis broken?`);
+    card.querySelector('.lvl')!.textContent = 'Your exit rule';
+    card.append(
+      el('p', 'lede', `${opts.symbol ? '$' + opts.symbol + ': ' : ''}${sizeKnown ? `you're selling ${opts.sellPct}% by hand. ` : ''}Your rule: manual sell only on a thesis break; otherwise ${opts.cap}% max. Runners look like this before they run, and "I'm up and nervous" isn't a break.`),
+    );
+    let picked: string | null = null;
+    const box = el('div', 'pending');
+    box.append(el('div', 'pending-q', 'What broke?'));
+    const row = el('div', 'seg');
+    const choices = [...opts.reasons, { id: 'none', label: 'Nothing, I\'m just nervous' }];
+    for (const r of choices) {
+      const b = el('button', `seg-btn ${r.id === 'none' ? 'seg-loss' : ''}`, r.label);
+      b.addEventListener('click', () => {
+        picked = r.id;
+        row.querySelectorAll('.seg-btn').forEach((x) => x.classList.toggle('on', x === b));
+        sync();
+      });
+      row.append(b);
+    }
+    box.append(row);
+    card.append(box);
+    const msg = el('div', 'hint');
+    const actions = el('div', 'actions');
+    const hold = el('button', 'btn primary', sizeKnown ? `Cancel and sell ≤${opts.cap}%` : 'Cancel this sell');
+    const sell = el('button', 'btn ghost', 'Sell') as HTMLButtonElement;
+    actions.append(sell, hold);
+    card.append(msg, actions);
+    const sync = () => {
+      const isBreak = picked != null && picked !== 'none';
+      // Size unknown: "nothing broke" can still go ahead, but only as a sale within the cap.
+      sell.disabled = picked == null || (picked === 'none' && sizeKnown);
+      sell.textContent = picked === 'none' && !sizeKnown ? `I'm selling ${opts.cap}% or less` : 'Sell';
+      msg.textContent = picked === 'none'
+        ? `Then take ${opts.cap}% at most and let your stop and runner rule handle the rest.`
+        : isBreak ? 'A real break. Selling is the plan working.' : '';
+    };
+    sync();
+    hold.addEventListener('click', () => (close(), resolve({ go: false, reason: null })));
+    sell.addEventListener('click', () => {
+      if (sell.disabled) return;
+      close();
+      resolve({ go: true, reason: picked });
+    });
+    hold.focus();
   });
 }

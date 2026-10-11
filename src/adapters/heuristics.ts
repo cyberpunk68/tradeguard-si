@@ -70,6 +70,36 @@ function visibleInputs(root: ParentNode): HTMLInputElement[] {
   );
 }
 
+/**
+ * Share of the position a sell is for (0–100): "Sell 50%" on the button, "Sell all"/"Max", an active
+ * 25/50/100% chip, or a %-labelled amount field. null when the page doesn't say.
+ */
+export function readSellPct(control: HTMLElement, panel: HTMLElement): number | null {
+  const pct = (t: string) => {
+    const m = /(\d{1,3}(?:\.\d+)?)\s*%/.exec(t);
+    const v = m ? Number(m[1]) : NaN;
+    return v > 0 && v <= 100 ? v : null;
+  };
+  const own = textOf(control);
+  if (pct(own) != null) return pct(own);
+  if (/\b(sell|close)\s*all\b|\bmax\b/i.test(own)) return 100;
+  const chips = panel.querySelectorAll<HTMLElement>('[aria-pressed="true"], [aria-selected="true"], [aria-checked="true"], [data-state="active"], [data-state="on"], .active, .selected');
+  for (const c of chips) {
+    const t = textOf(c);
+    if (t.length <= 8 && pct(t) != null) return pct(t);
+  }
+  for (const input of visibleInputs(panel)) {
+    // Only a field that is itself a percentage (placeholder/label, or a bare "%" suffix right after it).
+    const own = `${input.placeholder} ${input.getAttribute('aria-label') ?? ''}`;
+    const suffix = input.nextElementSibling ? textOf(input.nextElementSibling as HTMLElement).trim() : '';
+    if ((/%/.test(own) || suffix === '%') && /^\d+(\.\d+)?$/.test(input.value.trim())) {
+      const v = Number(input.value);
+      if (v > 0 && v <= 100) return v;
+    }
+  }
+  return null;
+}
+
 function findPanel(control: HTMLElement, cfg: AdapterConfig): HTMLElement {
   if (cfg.panel) {
     const p = control.closest<HTMLElement>(cfg.panel);
@@ -304,10 +334,12 @@ export function createAdapter(cfg: AdapterConfig): SiteAdapter {
       if (notional && leverage && /\bmargin\b/i.test(textOf(panel)) && !/\b(size|qty|quantity)\b/i.test(textOf(panel))) {
         notional *= leverage;
       }
+      const side = sideFromText(textOf(control)) ?? sideFromText(textOf(panel).slice(0, 200));
       return {
         site: cfg.id,
         symbol: readSymbol(),
-        side: sideFromText(textOf(control)) ?? sideFromText(textOf(panel).slice(0, 200)),
+        side,
+        sellPct: side === 'sell' ? readSellPct(control, panel) : null,
         market,
         unit: cfg.unit,
         notional,

@@ -35,7 +35,7 @@ Pin the shield icon. The badge shows trades today, or `LOCK` during a lockout.
 | **Entry gate** (memecoins) | Buy fails your checklist, read off the token page: LP burned, dev holding, top-10 %, snipers + bundlers + insiders %, liquidity ≥ N× your size | Hard stop by default (configurable: pause / hard stop / block) |
 | **Scam check** (memecoins) | [Is It Bundled?](https://isitbundled.com) shows a bundled launch: supply bundled above your max, flagged wallets still holding, Proxima/Sumo bundling tools, a dev who bundles repeatedly, wallets funded together | Pause → hard stop; **"extreme" risk is blocked with no override** |
 
-Sells are never gated or scam-blocked. Getting out of a bad position is always allowed.
+Sells are never entry-gated or scam-blocked. Cutting a losing or flat position, or one without a recorded entry price, stays outside the manual-sell check. When you enable the manual-sell cap, selling more than that cap of a recorded winner asks you to name a thesis break first.
 
 When three or more serious warnings fire at once, friction goes up one level. Only lockout-class rules can reach level 4.
 
@@ -61,6 +61,8 @@ Modeled on the responsible-gambling toolkit and adapted to trading. Each one is 
 | Bankroll cap | Balance above cap → buys blocked until *you* sweep the excess to your vault (TradeGuard SI never moves funds) |
 | Entry discipline | Typed amount above quick-buy size · one A-setup/day · max buys/day · max open positions · no same-token rebuy after a loss · 15-min wait after a loss · cool-down after a big win |
 | 3-line check | Before every memecoin buy: callout? late entry? limits? One "no" = skip (last gate before the buy) |
+| Entry journal | Before that buy: tap whether higher lows are present and volume is building, then write your thesis and invalidation. These are saved with the trade. |
+| Manual-sell cap | For a recorded winner, selling more than your cap requires a thesis-break reason: lower low on rising volume, developer/insider sale, or liquidity drop. Default off; the memecoin and “Let it run” presets use 40%. |
 | FOMO-copy flag | Callout/chat lines like "it'll be too late later" are quoted back to you |
 | Time | Reality checks every 30 min of chart time · forced break after a long session · daily screen-time cap · quiet hours |
 | Rapid-fire | New order within 60 s → pause |
@@ -71,6 +73,10 @@ Modeled on the responsible-gambling toolkit and adapted to trading. Each one is 
 Lockouts take over every open trading tab the moment they start, whether from a click, a logged outcome or a Telegram `/lock`.
 
 ![Stop-win](docs/screenshots/16-stop-win.png)
+
+The **Let it run** preset sets a 25% stop distance and a 40% manual-sell cap. TradeGuard checks your click; it does not place stop orders. If the page doesn't expose the sell percentage, it asks you to confirm you're within the cap or name a thesis break, and cannot verify the percentage itself.
+
+![Manual sell check](docs/screenshots/19-sell-check.png)
 
 ### Scam check
 As soon as you open a token on Axiom, Photon, GMGN or BullX, TradeGuard SI looks up the launch on Is It Bundled? (cached for 5 minutes). If the launch is risky, a warning chip appears in the corner before you go near the Buy button. At the click, the result feeds the scam rule. Only the token's **public address** is sent. If the lookup fails or times out (3 s at the click), you get a warning and the order isn't held up.

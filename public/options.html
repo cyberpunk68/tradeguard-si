@@ -74,11 +74,12 @@
       <fieldset id="fs">
         <section class="card" style="border-color:rgba(79,209,165,.4)">
           <h2>TradeGuard SI rules</h2>
-          <p>One click to load the memecoin plan: −0.5 SOL daily cap with a 24h lockout, 2 losses max, 3 buys a day, 2 open positions, max 2 entries per token and a 30-min re-entry cooldown, 2/2.5 SOL bankroll, typed amount above 1 SOL, one A-setup a day, no same-token rebuy, 15-min wait after a loss, 60-min cool-down after a +$50 win, the 3-line check, FOMO-copy warnings, and a typed override that costs effort.</p>
+          <p>One click to load the memecoin plan: −0.5 SOL daily cap with a 24h lockout, 2 losses max, 3 buys a day, 2 open positions, max 2 entries per token and a 30-min re-entry cooldown, 2/2.5 SOL bankroll, typed amount above 1 SOL, one A-setup a day, no same-token rebuy, 15-min wait after a loss, 60-min cool-down after a +$50 win, the 3-line check, FOMO-copy warnings, and a typed override that costs effort, and rule 8: manual sell only on a thesis break; otherwise 40% max.</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button type="button" id="presetBtn" class="primary">Load TradeGuard SI rules</button>
             <button type="button" class="sysPreset" data-id="conviction">Conviction: 1 trade/day</button>
             <button type="button" class="sysPreset" data-id="smallfew">Small &amp; few: ≤0.5 SOL, 3/day</button>
+            <button type="button" class="sysPreset" data-id="runner">Let it run: exits set, hands off</button>
           </div>
           <span id="presetMsg" class="muted" style="margin-left:10px;font-size:12.5px"></span>
         </section>
@@ -179,6 +180,7 @@
             <label class="f">Re-entry cooldown (min)<small>after exiting a token · 0 = off</small><input type="number" min="0" step="5" name="tokenReentryCooldownMin" /></label>
             <label class="f">Entries per token per day<small>0 = off</small><input type="number" min="0" step="1" name="maxEntriesPerTokenPerDay" /></label>
             <label class="f">Your stop-loss (%)<small>buys are blocked if one stop-out would exceed what's left of the SOL cap</small><input type="number" min="0" max="100" step="1" name="stopLossPct" /></label>
+            <label class="f">Manual sell cap on winners (%)<small>sell more than this of a winning position by hand only on a thesis break. Losers always sell freely. 0 = off</small><input type="number" min="0" max="100" step="5" name="manualSellMaxPct" /></label>
             <label class="f">Late entry: block after +%<small>already ran this much (1h/6h/24h or since launch) · 0 = off</small><input type="number" min="0" step="50" name="lateEntryPct" /></label>
             <label class="f">Typed amount above (SOL)<small>A-setups only · 0 = off</small><input type="number" min="0" step="0.1" name="typedConfirmAboveSol" /></label>
             <label class="f">A-setup size (SOL)<input type="number" min="0" step="0.1" name="aSetupSizeSol" /></label>

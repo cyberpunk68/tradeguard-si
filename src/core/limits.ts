@@ -7,7 +7,7 @@ const HIGHER_IS_LOOSER_OFF_AT_0 = new Set<keyof Settings>([
   'dailyLossLimitUsd', 'weeklyLossLimitUsd', 'monthlyLossLimitUsd', 'maxLossesPerDay', 'tiltStreak', 'dailyScreenLimitMinutes',
   'sessionMaxMinutes', 'realityCheckMinutes', 'heaterWinStreak', 'bigWinUsd', 'bankrollMaxSol', 'typedConfirmAboveSol',
   'typedConfirmAboveUsd', 'escalationMultiple', 'dailyProfitTargetUsd', 'dailyLossLimitSol', 'maxBuysPerDay', 'maxOpenPositions',
-  'maxASetupsPerDay', 'tokenReentryCooldownMin', 'maxEntriesPerTokenPerDay', 'lateEntryPct', 'stopLossPct',
+  'maxASetupsPerDay', 'tokenReentryCooldownMin', 'maxEntriesPerTokenPerDay', 'lateEntryPct', 'stopLossPct', 'manualSellMaxPct',
 ]);
 /** Numeric limits where a bigger number is looser (no off-switch). */
 const HIGHER_IS_LOOSER = new Set<keyof Settings>([
