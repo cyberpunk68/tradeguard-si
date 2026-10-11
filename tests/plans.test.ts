@@ -5,7 +5,7 @@ const none = { autoCheck: 0, chat: 0, deepReview: 0 };
 
 describe('plans', () => {
   it('BYOK is always allowed and never metered, on every plan', () => {
-    for (const p of ['free', 'pro', 'ultra'] as const) {
+    for (const p of ['free', 'pro', 'ultra', 'max'] as const) {
       expect(allowance(p, { autoCheck: 99_999, chat: 99_999, deepReview: 99_999 }, 'deepReview', true)).toEqual({ ok: true, metered: false, remaining: null });
     }
   });
@@ -30,9 +30,17 @@ describe('plans', () => {
     expect(allowance('ultra', none, 'deepReview', false).ok).toBe(true);
   });
 
-  it('Ultra at the cap has nowhere to upgrade', () => {
+  it('Ultra at the cap offers Max', () => {
     const a = allowance('ultra', { ...none, autoCheck: PLANS.ultra.limits.autoChecksPerMonth }, 'autoCheck', false);
-    expect(!a.ok && a.upgradeTo).toBeNull();
+    expect(!a.ok && a.upgradeTo).toBe('max');
+  });
+
+  it('Max has exactly five times Pro automatic-check and chat quotas', () => {
+    expect(PLANS.max.limits.autoChecksPerMonth).toBe(5 * PLANS.pro.limits.autoChecksPerMonth);
+    expect(PLANS.max.limits.chatMessagesPerMonth).toBe(5 * PLANS.pro.limits.chatMessagesPerMonth);
+    expect(PLANS.ultra.priceUsd).toBe(29);
+    expect(PLANS.max.priceUsd).toBe(100);
+    expect(allowance('max', { ...none, chat: PLANS.max.limits.chatMessagesPerMonth }, 'chat', false)).toMatchObject({ ok: false, upgradeTo: null });
   });
 
   it('each tier strictly increases every limit', () => {

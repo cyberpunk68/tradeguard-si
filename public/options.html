@@ -74,7 +74,7 @@
       <fieldset id="fs">
         <section class="card" style="border-color:rgba(79,209,165,.4)">
           <h2>TradeGuard SI rules</h2>
-          <p>One click to load the memecoin plan: −0.5 SOL daily cap with a 24h lockout, 2 losses max, 3 buys a day, 2 open positions, max 2 entries per token and a 30-min re-entry cooldown, 2/2.5 SOL bankroll, typed amount above 1 SOL, one A-setup a day, no same-token rebuy, 15-min wait after a loss, 60-min cool-down after a +$50 win, the 3-line check, FOMO-copy warnings, and a typed override that costs effort, and rule 8: manual sell only on a thesis break; otherwise 40% max.</p>
+          <p>One click to load the token trading plan: −0.5 SOL daily cap with a 24h lockout, 2 losses max, 3 buys a day, 2 open positions, max 2 entries per token and a 30-min re-entry cooldown, 2/2.5 SOL bankroll, typed amount above 1 SOL, one A-setup a day, no same-token rebuy, 15-min wait after a loss, 60-min cool-down after a +$50 win, the 3-line check, FOMO-copy warnings, and a typed override that costs effort, and rule 8: manual sell only on a thesis break; otherwise 40% max.</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button type="button" id="presetBtn" class="primary">Load TradeGuard SI rules</button>
             <button type="button" class="sysPreset" data-id="conviction">Conviction: 1 trade/day</button>
@@ -135,7 +135,7 @@
         </section>
 
         <section class="card">
-          <h2>Memecoin entry gate</h2>
+          <h2>Token entry checks</h2>
           <p>Pass/fail checks read off the token page (Axiom, Photon, GMGN, BullX) before a buy. Sells are never gated.</p>
           <div class="toggle"><div><b>Enforce my entry gate</b><span>A buy that fails any check gets stopped.</span></div><label class="switch"><input type="checkbox" name="gateEnabled" /><span></span></label></div>
           <div class="fields" style="margin-top:8px">
@@ -201,7 +201,7 @@
           </div>
           <div class="toggle"><div><b>Quiet hours</b><span>Hard stop on late-night trading.</span></div><label class="switch"><input type="checkbox" name="quietHoursEnabled" /><span></span></label></div>
           <div class="toggle"><div><b>No same-token rebuy after a loss</b><span>Today's losers stay closed.</span></div><label class="switch"><input type="checkbox" name="sameTokenRebuyBlock" /><span></span></label></div>
-          <div class="toggle"><div><b>3-line check before memecoin buys</b><span>Callout? Late entry? Limits? One "no" means skip.</span></div><label class="switch"><input type="checkbox" name="preBuyChecklist" /><span></span></label></div>
+          <div class="toggle"><div><b>3-line check before token buys</b><span>Callout? Late entry? Limits? One "no" means skip.</span></div><label class="switch"><input type="checkbox" name="preBuyChecklist" /><span></span></label></div>
           <div class="toggle"><div><b>Flag FOMO copy</b><span>Warn when callouts and chat on the page are written to rush you.</span></div><label class="switch"><input type="checkbox" name="fomoCopyWarning" /><span></span></label></div>
         </section>
 

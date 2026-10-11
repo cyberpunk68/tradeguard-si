@@ -8,6 +8,7 @@ import { traderContext } from '../coach/context';
 import { COACH_SYSTEM } from '../coach/prompt';
 import { COACH_TOOLS, runCoachTool, type Proposal, type VerdictCard } from '../coach/tools';
 import { COACH_MODELS } from '../core/defaults';
+import { PLANS } from '../core/plans';
 import { snapshotForPrompt, type LiveSnapshot } from '../core/live';
 import { isLocked, loadState, saveSettings } from '../storage';
 import { coachClient, coachTransport, getAccount } from '../account';
@@ -165,7 +166,7 @@ async function renderKeySetup(show: boolean) {
   box.append(
     node('h2', '', hasKey ? `Coach: your ${provider.label.split(' (')[0]} key` : hosted ? 'Coach connected' : 'Connect a coach'),
     node('p', '', hosted
-      ? `Using your ${acct!.plan === 'ultra' ? 'Ultra' : 'Pro'} plan's hosted coach. Optionally use your own key instead (unmetered, billed by that provider).`
+      ? `Using your ${acct!.plan === 'max' ? 'Max' : acct!.plan === 'ultra' ? 'Ultra' : 'Pro'} plan's hosted coach. Optionally use your own key instead (unmetered, billed by that provider).`
       : 'Use your own API key. It stays in this browser and is only sent to the provider you pick. Or link a Pro/Ultra account in TradeGuard SI settings to use the hosted coach, no key needed.'),
   );
 
@@ -245,8 +246,10 @@ async function renderModelMenu() {
   const provider = t?.provider ?? providerOf(settings.coachProvider);
   const current = t?.chatModel ?? (provider.id === 'anthropic' ? settings.coachModel : settings.coachProviderModels?.[provider.id]?.chat || provider.chat[0].id);
   $('dataTo').textContent = t?.hosted ? 'the TradeGuard SI coach (then Anthropic)' : `${provider.label.split(' (')[0]} with your API key`;
-  sel.replaceChildren(...provider.chat.map((m) => new Option(m.label, m.id, false, m.id === current)));
-  if (!provider.chat.some((m) => m.id === current)) sel.append(new Option(current, current, true, true));
+  const accountPlan = (await getAccount())?.plan ?? 'free';
+  const choices = t?.hosted ? provider.chat.filter(m => m.id.includes('haiku') || (m.id.includes('opus') && PLANS[accountPlan].limits.deepReviewsPerMonth > 0)) : provider.chat;
+  sel.replaceChildren(...choices.map((m) => new Option(t?.hosted ? (m.id.includes('opus') ? 'Deep review (premium)' : 'Everyday coach') : m.label, m.id, false, m.id === current)));
+  if (!choices.some((m) => m.id === current)) sel.append(new Option(current, current, true, true));
   sel.onchange = async () => {
     const { settings } = await loadState();
     if (provider.id === 'anthropic') return void (await saveSettings({ coachModel: sel.value }));

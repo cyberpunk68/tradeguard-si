@@ -32,8 +32,8 @@ Pin the shield icon. The badge shows trades today, or `LOCK` during a lockout.
 | **Daily loss** | Logged P&L today ≤ −$limit | **Lockout until midnight** |
 | **Tilt** | N consecutive logged losses | **Lockout** for N minutes |
 | **Mood** | Check-in ≤2/5 or tagged FOMO/angry/euphoric | Limits halved, friction +1 level |
-| **Entry gate** (memecoins) | Buy fails your checklist, read off the token page: LP burned, dev holding, top-10 %, snipers + bundlers + insiders %, liquidity ≥ N× your size | Hard stop by default (configurable: pause / hard stop / block) |
-| **Scam check** (memecoins) | [Is It Bundled?](https://isitbundled.com) shows a bundled launch: supply bundled above your max, flagged wallets still holding, Proxima/Sumo bundling tools, a dev who bundles repeatedly, wallets funded together | Pause → hard stop; **"extreme" risk is blocked with no override** |
+| **Entry gate** (tokens) | Buy fails your checklist, read off the token page: LP burned, dev holding, top-10 %, snipers + bundlers + insiders %, liquidity ≥ N× your size | Hard stop by default (configurable: pause / hard stop / block) |
+| **Scam check** (tokens) | [Is It Bundled?](https://isitbundled.com) shows a bundled launch: supply bundled above your max, flagged wallets still holding, Proxima/Sumo bundling tools, a dev who bundles repeatedly, wallets funded together | Pause → hard stop; **"extreme" risk is blocked with no override** |
 
 Sells are never entry-gated or scam-blocked. Cutting a losing or flat position, or one without a recorded entry price, stays outside the manual-sell check. When you enable the manual-sell cap, selling more than that cap of a recorded winner asks you to name a thesis break first.
 
@@ -50,7 +50,7 @@ When three or more serious warnings fire at once, friction goes up one level. On
 The **panic button** in the popup lets you lock yourself out for 30 min, 1 h, 4 h, or the rest of the day.
 
 ### Gambling-harm protections
-Modeled on the responsible-gambling toolkit and adapted to trading. Each one is configurable under **Settings → Protections**, and **Load TradeGuard SI rules** applies the memecoin plan in one click.
+Modeled on the responsible-gambling toolkit and adapted to trading. Each one is configurable under **Settings → Protections**, and **Load TradeGuard SI rules** applies the token plan in one click.
 
 | Protection | Behavior |
 |---|---|
@@ -60,9 +60,9 @@ Modeled on the responsible-gambling toolkit and adapted to trading. Each one is 
 | Doubling up | Each order ≥1.3× the last → hard stop |
 | Bankroll cap | Balance above cap → buys blocked until *you* sweep the excess to your vault (TradeGuard SI never moves funds) |
 | Entry discipline | Typed amount above quick-buy size · one A-setup/day · max buys/day · max open positions · no same-token rebuy after a loss · 15-min wait after a loss · cool-down after a big win |
-| 3-line check | Before every memecoin buy: callout? late entry? limits? One "no" = skip (last gate before the buy) |
+| 3-line check | Before every token buy: callout? late entry? limits? One "no" = skip (last gate before the buy) |
 | Entry journal | Before that buy: tap whether higher lows are present and volume is building, then write your thesis and invalidation. These are saved with the trade. |
-| Manual-sell cap | For a recorded winner, selling more than your cap requires a thesis-break reason: lower low on rising volume, developer/insider sale, or liquidity drop. Default off; the memecoin and “Let it run” presets use 40%. |
+| Manual-sell cap | For a recorded winner, selling more than your cap requires a thesis-break reason: lower low on rising volume, developer/insider sale, or liquidity drop. Default off; the token and “Let it run” presets use 40%. |
 | FOMO-copy flag | Callout/chat lines like "it'll be too late later" are quoted back to you |
 | Time | Reality checks every 30 min of chart time · forced break after a long session · daily screen-time cap · quiet hours |
 | Rapid-fire | New order within 60 s → pause |
@@ -110,7 +110,7 @@ Each card has up to three reasons with numbers, a "Watch" trigger, and one "Do n
   - **OpenRouter**: one key for Claude, OpenAI, DeepSeek, Qwen and more. Cheaper picks are listed in the model menu (e.g. GPT-6 Luna, Qwen3.8 Flash, DeepSeek V4 Flash), and any OpenRouter model ID that supports tools works.
   - **OpenCode Zen**: Claude and Qwen models at Zen prices.
   - Keys are stored per provider in this browser only, never synced or exported, and sent only to that provider. Thinking and caching run only on Claude models; chart screenshots only go to models that accept images.
-- **Hosted coach (Pro/Ultra):** no key needed; it runs the Claude models.
+- **Hosted coach (Pro/Ultra/Max):** no key needed. Everyday coaching uses Haiku; premium deep reviews use Opus. Monthly message and cost-based fair-use allowances apply.
 - The blocking itself never depends on the model. Rules run locally and instantly, even if the API is down.
 
 ![Coach](docs/screenshots/12-coach.png)
@@ -123,7 +123,7 @@ Each card has up to three reasons with numbers, a "Watch" trigger, and one "Do n
 
 ## Supported sites
 
-Axiom, Photon, GMGN, BullX (memecoin terminals, SOL-denominated, with the entry gate and scam check), Polymarket and Kalshi (prediction markets), Jupiter and Robinhood (incl. on-chain stocks such as xStocks), Binance, Bybit, OKX, Coinbase Advanced, Kraken Pro, Hyperliquid, ARC Terminal, and any site you add under **Settings → Custom sites**. Custom sites use the generic adapter and ask for permission for that one site.
+Axiom, Photon, GMGN, BullX (token terminals, SOL-denominated, with the entry gate and scam check), Polymarket and Kalshi (prediction markets), Jupiter and Robinhood (incl. on-chain stocks such as xStocks), Binance, Bybit, OKX, Coinbase Advanced, Kraken Pro, Hyperliquid, ARC Terminal, and any site you add under **Settings → Custom sites**. Custom sites use the generic adapter and ask for permission for that one site.
 
 ## Architecture
 
@@ -132,7 +132,7 @@ src/
   core/            pure, DOM-free, unit-tested
     engine.ts      evaluate(context) → verdict { level 0–4, hits, lockout }
     rules.ts       one function per rule, mentor-style messages with real numbers
-    token-rules.ts entry gate + scam check (memecoin buys)
+    token-rules.ts entry gate + scam check (token buys)
     mood.ts        check-in → limit multiplier + friction bump
     insights.ts    dashboard stats & plain-language patterns
   adapters/
@@ -169,7 +169,7 @@ This code is public so you can check every claim below. Data lives in `chrome.st
 | `api.anthropic.com` | Only when you use the coach with **your own** Anthropic key (the default provider) | Your question, plus what the coach looks up: page snapshot, your rules and stats, trade log, optional chart screenshot |
 | `openrouter.ai` | Only if you pick **OpenRouter** as the coach provider and save your OpenRouter key (Chrome asks for access then) | Same as the row above. OpenRouter forwards it to the model you choose (e.g. OpenAI, DeepSeek, Qwen, Claude) |
 | `opencode.ai` | Only if you pick **OpenCode Zen** and save your OpenCode key (Chrome asks for access then) | Same as the Anthropic row. Chart screenshots only go to models that accept images |
-| TradeGuard SI server | Only if you link an account (opt-in) | Coach requests on Pro/Ultra (same content as the row above, proxied); token address for the shared token check; and, only if you also tick *sync*, your trades, mood check-ins, lockouts and settings |
+| TradeGuard SI server | Only if you link an account (opt-in) | Coach requests on Pro/Ultra/Max (same content as the row above, proxied); token address for the shared token check; and, only if you also tick *sync*, your trades, mood check-ins, lockouts and settings |
 
 - It never asks for or reads private keys, seed phrases, exchange API keys or passwords, and never signs anything.
 - It never places, changes or cancels an order. It only holds back or replays *your own* click.

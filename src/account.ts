@@ -15,7 +15,7 @@ export interface AccountLink {
   apiBase: string;
   syncEnabled: boolean;
   cursor: string | null;
-  plan?: 'free' | 'pro' | 'ultra';
+  plan?: 'free' | 'pro' | 'ultra' | 'max';
   lastSyncAt?: number;
   lastError?: string | null;
 }
@@ -57,7 +57,7 @@ export async function unlinkAccount() {
 }
 
 export interface Me {
-  plan: 'free' | 'pro' | 'ultra';
+  plan: 'free' | 'pro' | 'ultra' | 'max';
   planName: string;
   usage: { autoCheck: number; chat: number; deepReview: number };
   limits: { hostedAI: boolean; autoChecksPerMonth: number; chatMessagesPerMonth: number; deepReviewsPerMonth: number; sync: boolean; telegram: boolean };
@@ -160,7 +160,7 @@ export async function coachTransport(): Promise<CoachTransport | null> {
   const a = await getAccount();
   if (a && a.plan && a.plan !== 'free') {
     const anthropic = PROVIDERS.anthropic;
-    const chatModel = anthropic.chat.some((m) => m.id === settings.coachModel) ? settings.coachModel : anthropic.chat[0].id;
+    const chatModel = settings.coachModel === 'claude-opus-5-5' && (a.plan === 'ultra' || a.plan === 'max') ? settings.coachModel : 'claude-haiku-5-5';
     return { apiKey: a.token, baseURL: `${a.apiBase}/api/coach`, hosted: true, provider: anthropic, chatModel, autoModel: anthropic.auto };
   }
   return null;

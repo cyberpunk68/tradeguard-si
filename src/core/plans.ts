@@ -4,7 +4,7 @@
 // Bring-your-own-key works on every plan and is never metered: the trader pays Anthropic directly.
 // Limits below apply only to the hosted coach (our key).
 
-export type PlanId = 'free' | 'pro' | 'ultra';
+export type PlanId = 'free' | 'pro' | 'ultra' | 'max';
 export type UsageKind = 'autoCheck' | 'chat' | 'deepReview';
 
 export interface Plan {
@@ -36,7 +36,7 @@ export const PLANS: Record<PlanId, Plan> = {
     tagline: 'Every guardrail, on your machine.',
     features: [
       'Order blocking: size, leverage, overtrading, revenge, chasing',
-      'Memecoin entry gate + bundled-launch scam check',
+      'Token entry checks + bundled-launch risk signals',
       'Lockouts, commitment mode, mood check-ins, dashboard',
       'AI coach with your own Anthropic, OpenRouter or OpenCode key',
     ],
@@ -49,8 +49,9 @@ export const PLANS: Record<PlanId, Plan> = {
     tagline: 'The coach, hosted, everywhere you trade.',
     features: [
       'Everything in Free',
-      'Hosted AI coach, no API key needed',
+      'Hosted everyday coach, no API key needed',
       '300 auto-checks + 200 coach messages / month',
+      'Hosted AI fair-use limits apply',
       'Telegram bot: token checks, /lock, /checkin, alerts',
       'Sync: a lockout in Chrome locks Telegram too',
     ],
@@ -59,17 +60,24 @@ export const PLANS: Record<PlanId, Plan> = {
   ultra: {
     id: 'ultra',
     name: 'Ultra',
-    priceUsd: 49,
+    priceUsd: 29,
     tagline: 'For traders who live in the terminal.',
     features: [
       'Everything in Pro',
-      'Opus deep reviews: 40 / month',
+      'Opus deep reviews: up to 10 / month',
       'Chart read on every auto-check',
       '1,000 auto-checks + 600 coach messages / month',
       'Weekly performance review delivered to Telegram',
       'Unlimited history',
+      'Hosted AI fair-use limits apply',
     ],
-    limits: { hostedAI: true, autoChecksPerMonth: 1000, chatMessagesPerMonth: 600, deepReviewsPerMonth: 40, chartOnAutoCheck: true, telegram: true, sync: true, historyDays: 36500 },
+    limits: { hostedAI: true, autoChecksPerMonth: 1000, chatMessagesPerMonth: 600, deepReviewsPerMonth: 10, chartOnAutoCheck: true, telegram: true, sync: true, historyDays: 36500 },
+  },
+  max: {
+    id: 'max', name: 'Max', priceUsd: 100,
+    tagline: 'Five times Pro’s coaching quota.',
+    features: ['Everything in Ultra', '1,500 auto-checks + 1,000 coach messages / month', 'Opus deep reviews: up to 40 / month', 'Chart checks and weekly Telegram reviews', 'Hosted AI fair-use limits apply'],
+    limits: { hostedAI: true, autoChecksPerMonth: 1500, chatMessagesPerMonth: 1000, deepReviewsPerMonth: 40, chartOnAutoCheck: true, telegram: true, sync: true, historyDays: 36500 },
   },
 };
 
@@ -88,7 +96,7 @@ const LABEL: Record<UsageKind, string> = { autoCheck: 'auto-checks', chat: 'coac
 
 /** The cheapest plan above `from` that allows more of `kind`. */
 function upgradeFor(from: PlanId, kind: UsageKind): PlanId | null {
-  const order: PlanId[] = ['free', 'pro', 'ultra'];
+  const order: PlanId[] = ['free', 'pro', 'ultra', 'max'];
   const cur = PLANS[from].limits[LIMIT_KEY[kind]] as number;
   return order.slice(order.indexOf(from) + 1).find((p) => (PLANS[p].limits[LIMIT_KEY[kind]] as number) > cur) ?? null;
 }
