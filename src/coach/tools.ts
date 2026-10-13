@@ -179,10 +179,13 @@ export async function runCoachTool(name: string, input: Record<string, unknown>)
       const problems: string[] = [];
       for (const [k, v] of Object.entries(changes)) {
         const def = (DEFAULT_SETTINGS as unknown as Record<string, unknown>)[k];
-        if (def === undefined || NOT_PROPOSABLE.has(k)) problems.push(`${k}: not a changeable setting`);
+        // Only numeric and on/off rules. Text fields (wallets, URLs, contacts, notes) are never proposable:
+        // page text reaches the coach, so a proposal must not be able to point money or requests elsewhere.
+        if (def === undefined || NOT_PROPOSABLE.has(k) || (typeof def !== 'number' && typeof def !== 'boolean')) problems.push(`${k}: not a changeable setting`);
         else if (typeof v !== typeof def) problems.push(`${k}: expected a ${typeof def}`);
         else if (typeof v === 'number' && (!Number.isFinite(v) || v < 0)) problems.push(`${k}: must be a non-negative number`);
         else if (k === 'commitmentMode' && v === false) problems.push('commitmentMode: the coach can turn commitment mode on, never off');
+        else if (k === 'rulesLocked' && v === false) problems.push('rulesLocked: the coach can lock rules, never unlock them');
         else if (k === 'gateSeverity' && ![2, 3, 4].includes(v as number)) problems.push('gateSeverity: must be 2, 3 or 4');
         else {
           clean[k] = v;

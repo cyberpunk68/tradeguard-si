@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "TradeGuard SI: Trading Discipline Coach",
   "short_name": "TradeGuard",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "The edge you need: blocks oversized, overleveraged, revenge, FOMO and scam trades before you click. Lockouts, mood log, AI coach.",
   "icons": {
     "16": "icons/icon-16.png",

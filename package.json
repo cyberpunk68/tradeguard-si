@@ -1,6 +1,6 @@
 {
   "name": "tradeguard",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "description": "Chrome extension that adds friction and lockouts before bad crypto trades, with mood tracking.",
   "scripts": {
     "build": "node scripts/build.mjs",

@@ -8,6 +8,7 @@ import { traderContext } from '../coach/context';
 import { COACH_SYSTEM } from '../coach/prompt';
 import { COACH_TOOLS, runCoachTool, type Proposal, type VerdictCard } from '../coach/tools';
 import { COACH_MODELS } from '../core/defaults';
+import { lockedDelayHours, splitChanges } from '../core/limits';
 import { PLANS } from '../core/plans';
 import { snapshotForPrompt, type LiveSnapshot } from '../core/live';
 import { isLocked, loadState, saveSettings } from '../storage';
@@ -104,8 +105,19 @@ function proposalCard(p: Proposal): HTMLElement {
       row.replaceChildren(node('span', 'muted', 'Rules are frozen during a commitment-mode lockout.'));
       return;
     }
-    await saveSettings(p.changes);
-    row.replaceChildren(node('span', 'muted', 'Applied ✓'));
+    // Same rules as the settings page: tightening applies now, loosening waits out the cooling-off
+    // period, and locked rules can only be loosened from Settings (with its typed confirmation).
+    const split = splitChanges(settings, p.changes);
+    if (split.later && settings.rulesLocked) {
+      row.replaceChildren(node('span', 'muted', 'Your rules are locked. Loosen them in Settings, where the cooling-off steps apply.'));
+      return;
+    }
+    await saveSettings(split.now);
+    if (split.later) {
+      const { pendingSettings: prev } = await loadState();
+      await chrome.storage.local.set({ pendingSettings: { changes: { ...(prev?.changes ?? {}), ...split.later.changes }, effectiveAt: Date.now() + lockedDelayHours(settings) * 3600_000 } });
+    }
+    row.replaceChildren(node('span', 'muted', split.later ? 'Applied. Looser limits take effect after the cooling-off period.' : 'Applied ✓'));
   });
   row.append(no, yes);
   card.append(row);

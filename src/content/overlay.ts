@@ -415,7 +415,7 @@ export function intervene(v: Verdict, s: Settings, lockoutUntil?: number, extra:
     sync();
 
     cancel.addEventListener('click', () => done(false));
-    go.addEventListener('click', () => !go.disabled && done(true));
+    go.addEventListener('click', (e) => e.isTrusted && !go.disabled && done(true));
     card.addEventListener('keydown', (e) => e.key === 'Escape' && done(false));
     cancel.focus();
   });
@@ -484,8 +484,8 @@ function overrideBox(done: (go: boolean) => void): HTMLElement {
   const t = setInterval(sync, 250);
   reason.addEventListener('input', sync);
   phrase.addEventListener('input', sync);
-  go.addEventListener('click', () => {
-    if (go.disabled) return;
+  go.addEventListener('click', (e) => {
+    if (!e.isTrusted || go.disabled) return; // the page's own scripts can't click through an override
     clearInterval(t);
     void logDistress('override');
     done(true);
@@ -571,8 +571,8 @@ export function checklist(opts: { limitsLine: string; limitsOk: boolean; symbol:
       const no = answers.indexOf(false);
       resolve({ pass: false, failed: no === 0 ? 'callout' : no === 1 ? 'late entry' : !opts.limitsOk ? 'limits' : 'skipped' });
     });
-    buy.addEventListener('click', () => {
-      if (buy.disabled) return;
+    buy.addEventListener('click', (e) => {
+      if (!e.isTrusted || buy.disabled) return;
       close();
       resolve({ pass: true, failed: null, card: `${journal.structure} | ${journal.volume} | Thesis: ${thesis.value.trim().slice(0, 200)} | Invalidation: ${inval.value.trim().slice(0, 60)}` });
     });
@@ -628,8 +628,8 @@ export function sellCheck(opts: { gainPct: number; sellPct: number | null; cap: 
     };
     sync();
     hold.addEventListener('click', () => (close(), resolve({ go: false, reason: null })));
-    sell.addEventListener('click', () => {
-      if (sell.disabled) return;
+    sell.addEventListener('click', (e) => {
+      if (!e.isTrusted || sell.disabled) return;
       close();
       resolve({ go: true, reason: picked });
     });
